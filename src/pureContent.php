@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-4
- * Version 1.0
+ * Version 1.1
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -247,6 +247,31 @@ class pureContent {
 	{
 		# Echo the result
 		return highlightSearchTerms::highlightSearchTerms ();
+	}
+	
+	
+	# Function to create a basic threading system to enable easy previous/index/next links
+	function thread ($pages)
+	{
+		# Loop through the list of pages numerically to find a match
+		$totalPages = count ($pages);
+		for ($page = 0; $page < $totalPages; $page++) {
+			
+			# If there's a match with the current page, break out of the loop and assign the previous/next links
+			if ($pages[$page] == $_SERVER['REQUEST_URI']) {
+				break;
+			}
+		}
+		
+		# Construct the HTML
+		$html  = "\n" . '<ul class="thread">';
+		$html .= (isSet ($pages[$page - 1]) ? "\n\t" . '<li><a href="' . $pages[$page - 1] . '">&lt; Previous</a></li>' : '');
+		$html .= (isSet ($pages[0]) ? "\n\t" . '<li><a href="' . $pages[0] . '">Home</a></li>' : '');
+		$html .= (isSet ($pages[$page + 1]) ? "\n\t" . '<li><a href="' . $pages[$page + 1] . '">Next &gt;</a></li>' : '');
+		$html .= "\n" . '</ul>';
+		
+		# Return the HTML
+		return $html;
 	}
 }
 
