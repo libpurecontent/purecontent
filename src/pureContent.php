@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-4
- * Version 1.1
+ * Version 1.11
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -49,14 +49,17 @@ class pureContent {
 		#!# Needs further work
 		// $_SERVER['SCRIPT_URL'];
 		
-		# Assign the query string
-		// $_SERVER['QUERY_STRING'];
+		# Assign the query string (for the few cases, e.g. a 404, where a REDIRECT_QUERY_STRING is generated instead
+		$_SERVER['QUERY_STRING'] = (isSet ($_SERVER['REDIRECT_QUERY_STRING']) ? $_SERVER['REDIRECT_QUERY_STRING'] : $_SERVER['QUERY_STRING']);
 		
 		# Assign the referring page
 		$_SERVER['HTTP_REFERER'] = (isSet ($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '');
 		
 		# Assign the user's IP address
 		// $_SERVER['REMOTE_ADDR'];
+		
+		# Assign the username
+		$_SERVER['REMOTE_USER'] = (isSet ($_SERVER['REMOTE_USER']) ? $_SERVER['REMOTE_USER'] : (isSet ($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : NULL));
 		
 		# Assign the user's browser
 		$_SERVER['HTTP_USER_AGENT'] = (isSet ($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '');
@@ -142,6 +145,7 @@ class pureContent {
 					
 					# Allow the behaviour to be overridden by including a behavioural hack file
 					if ($behaviouralHackFile) {include $behaviouralHackFile;}
+					
 				}
 			}
 			
@@ -240,7 +244,7 @@ class pureContent {
 		$style = (isSet ($style) ? $style : $temp['key']);
 		
 		# Start the HTML
-		$html['header'] = '<style type="text/css" media="screen" title="User Defined Style">@import "' . $directory . $style . '.css";</style>';
+		$html['header'] = '<style type="text/css" media="all" title="User Defined Style">@import "' . $directory . $style . '.css";</style>';
 		$html['links']  = "\n\t" . '<ul class="switch">';
 		$html['links'] .= "\n\t\t" . '<li>Switch style:</li>';
 		
@@ -249,7 +253,7 @@ class pureContent {
 			
 			# Add in the header links (but not to the present one)
 			if ($style != $file) {
-				$html['header'] .= "\n\t" . '<link rel="alternate stylesheet" type="text/css" media="screen" href="' . $directory . $file . '.css" title="' . $name . '" />';
+				$html['header'] .= "\n\t" . '<link rel="alternate stylesheet" type="text/css" href="' . $directory . $file . '.css" title="' . $name . '" />';
 			}
 			
 			# Add in the on-page links (including the present one for page stability)
@@ -450,15 +454,13 @@ class highlightSearchTerms
 		
 		# Loop through each of the search words
 		$i = 0;
-		
 		foreach ($searchWords as $searchWord) {
 		    
 			# Stop further parsing if a large number of words have been supplied
 			if ($i == $limitWords) {break;}
 			
 			# Escape slashes to prevent PCRE errors as listed on www.php.net/pcre.pattern.syntax
-			$searchWord = quotemeta ($searchWord);
-			$searchWord = str_replace (array ('|', '{', '}'), array ('\|', '\{', '\}'), $searchWord);
+			$searchWord = preg_quote ($searchWord, '/');
 			
 			# Run a regexp match and put the matches into $matches[0]
 			$regexpStart = '>[^<]*(';
