@@ -76,7 +76,7 @@ class pureContent {
 	 * @param string $sectionTitleFile			// The filename for the section information placed in each directory
 	 * @param string $menuTitleFile				// The filename for the submenu placed in each top-level directory
 	 */
-	function assignNavigation ($dividingTextOnPage = ' &#187; ', $dividingTextInBrowserLine = ' &#187; ', $introductoryText = 'You are in:  ', $homeText = 'Home', $enforceStrictBehaviour = false, $browserlineFullHierarchy = false, $homeLocation = '/', $sectionTitleFile = '.title.txt', $menuTitleFile = '.menu.html', $tildeRoot = '/home/')
+	function assignNavigation ($dividingTextOnPage = ' &#187; ', $dividingTextInBrowserLine = ' &#187; ', $introductoryText = 'You are in:  ', $homeText = 'Home', $enforceStrictBehaviour = false, $browserlineFullHierarchy = false, $homeLocation = '/', $sectionTitleFile = '.title.txt', $menuTitleFile = '.menu.html', $tildeRoot = '/home/', $behaviouralHackFile = '')
 	{
 		# Ensure the home location and tilde root ends with a trailing slash
 		if (substr ($homeLocation, -1) != '/') {$homeLocation .= '/';}
@@ -139,6 +139,9 @@ class pureContent {
 					
 					# Build up the text for the browser title
 					$browserline = ($browserlineFullHierarchy ? $browserline : '') . $dividingTextInBrowserLine . $contents;
+					
+					# Allow the behaviour to be overridden by including a behavioural hack file
+					if ($behaviouralHackFile) {include $behaviouralHackFile;}
 				}
 			}
 			
@@ -153,7 +156,7 @@ class pureContent {
 	
 	
 	# Define a function to generate the menu
-	function generateMenu ($menu, $cssSelected = 'selected', $parentTabLevel = 2, $orphanedDirectories = array ())
+	function generateMenu ($menu, $cssSelected = 'selected', $parentTabLevel = 2, $orphanedDirectories = array (), $menufile = '')
 	{
 		# Loop through each menu item to match the starting location but take account of lower-level subdirectories override higher-level directories
 		$match = '';
@@ -176,14 +179,35 @@ class pureContent {
 		$tabs = str_repeat ("\t", ($parentTabLevel));
 		
 		# Create the HTML
-		$html = "\n$tabs<ul>";
+		echo "\n$tabs<ul>";
+		$spaced = false;
 		foreach ($menu as $location => $description) {
-			$html .= "\n$tabs\t<li" . ($match == $location ? " class=\"$cssSelected\"" : '') . "><a href=\"$location\">$description</a></li>";
+			
+			# Set the spacer flag if necessary
+			if ((substr ($location, 0, 6) == 'spacer') && ($description == '_')) {
+				$spaced = true;
+				continue;
+			}
+			
+			# Show the link
+			echo "\n$tabs\t" . '<li class="' . str_replace (array ('/', ':', '.'), array ('', '-', '-'), $location) . ($match == $location ? " $cssSelected" : '') . (($spaced) ? ' spaced' : '') . "\"><a href=\"$location\">$description</a>";
+			
+			# Reset the spacer flag
+			$spaced = false;
+			
+			# Include the menu file
+			if ($match == $location) {
+				if (!empty ($menufile)) {
+					if (file_exists ($menufile)) {
+						include ($menufile);
+					}
+				}
+			}
+			
+			# End the menu item
+			echo '</li>';
 		}
-		$html .= "\n$tabs</ul>";
-		
-		# Return the HTML
-		return $html;
+		echo "\n$tabs</ul>";
 	}
 	
 	
@@ -246,7 +270,7 @@ class pureContent {
 	function highlightSearchTerms ()
 	{
 		# Echo the result
-		return highlightSearchTerms::highlightSearchTerms ();
+		return highlightSearchTerms::main ();
 	}
 	
 	
@@ -279,15 +303,19 @@ class pureContent {
 # Class for highlighting words from a search engine's referring page which includes search terms in the URL
 class highlightSearchTerms
 {
-	# Only run the buffer if there is an outside referer, to save processing speed
-	function highlightSearchTerms ()
+	# Quasi-constructor
+	function main ()
 	{
-		if (!empty ($_SERVER['HTTP_REFERER'])) {
-			$referer = parse_url ($_SERVER['HTTP_REFERER']);
-			if (isSet ($referer['host'])) {
-				if ($referer['host'] != $_SERVER['HTTP_HOST']) {
-					ob_start (array ('highlightSearchTerms', 'wrapper')); 
-				}
+		# Only run the buffer if there is an outside referer, to save processing speed
+		if (empty ($_SERVER['HTTP_REFERER'])) {return;}
+		
+		# Get the referer
+		if (!$referer = @parse_url ($_SERVER['HTTP_REFERER'])) {return;}
+		
+		# Buffer the output
+		if (isSet ($referer['host'])) {
+			if ($referer['host'] != $_SERVER['HTTP_HOST']) {
+				ob_start (array ('highlightSearchTerms', 'wrapper')); 
 			}
 		}
 	}
@@ -310,6 +338,7 @@ class highlightSearchTerms
 	
 	
 	# List the available colours for highlighting, or enter 'highlight' to use class="highlight"
+	#!# This should be set in the options instead of as a method
 	function availableColours ()
 	{
 		# Return an array of available colours
@@ -421,13 +450,15 @@ class highlightSearchTerms
 		
 		# Loop through each of the search words
 		$i = 0;
+		
 		foreach ($searchWords as $searchWord) {
 		    
 			# Stop further parsing if a large number of words have been supplied
 			if ($i == $limitWords) {break;}
 			
-			# Escape slashes to prevent PCRE errors as listed on www.php.net/pcre.pattern.modifiers
-			$searchWord = str_replace ('/', '\/', $searchWord);
+			# Escape slashes to prevent PCRE errors as listed on www.php.net/pcre.pattern.syntax
+			$searchWord = quotemeta ($searchWord);
+			$searchWord = str_replace (array ('|', '{', '}'), array ('\|', '\{', '\}'), $searchWord);
 			
 			# Run a regexp match and put the matches into $matches[0]
 			$regexpStart = '>[^<]*(';
@@ -452,10 +483,12 @@ class highlightSearchTerms
 				$newtext = str_replace ($case_sensitive_searchWord, ($highlightCodeStart . $case_sensitive_searchWord . '</span>'), $match);
 				$html = str_replace ($match, $newtext, $html);
 			}
+			
 			$i++;
 		}
 		
 		# Return the result
+		#!# This could be undefined...
 		return $html;
 	}
 }
