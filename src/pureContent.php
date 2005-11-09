@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-5
- * Version 1.12
+ * Version 1.13
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -161,6 +161,9 @@ class pureContent {
 	# Define a function to generate the menu
 	function generateMenu ($menu, $cssSelected = 'selected', $parentTabLevel = 2, $orphanedDirectories = array (), $menufile = '')
 	{
+		# Ensure the orphanedDirectories supplied is an array
+		if (!is_array ($orphanedDirectories)) {$orphanedDirectories = array ();}
+		
 		# Loop through each menu item to match the starting location but take account of lower-level subdirectories override higher-level directories
 		$match = '';
 		foreach ($menu as $location => $description) {
@@ -517,7 +520,7 @@ class highlightSearchTerms
 					break;
 			}
 			
-			# Loop through each of the matches
+			# Loop through each of the matches; NB This sometimes times out (due to lots of words on a long page), but there's little that can be done, other than stopping replacement half-way through
 			#!# Clean this up
 			foreach ($matches[0] as $match) {
 				preg_match ("/$searchWord/i", $match, $out);
