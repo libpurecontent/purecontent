@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-5
- * Version 1.13
+ * Version 1.14
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -214,6 +214,31 @@ class pureContent {
 			echo '</li>';
 		}
 		echo "\n$tabs</ul>";
+	}
+	
+	
+	# Function to create an id and class for the body tag, useful for CSS selectors
+	function bodyAttributes ($addSiteUrl = true)
+	{
+		# The REQUEST_URI will have been cleaned by pureContent::cleanServerGlobals already to implode // into /
+		// No action
+		
+		# Start with the site URL if wanted
+		$bodyClass = ($addSiteUrl ? ' id="' . htmlentities (str_replace ('.', '-', $_SERVER['SERVER_NAME'])) . '"' : '');
+		
+		# Return 'home' if no subdirectory
+		if (substr_count ($_SERVER['REQUEST_URI'], '/') < 2) {return $bodyClass . ' class="homepage"';}
+		
+		# Split the URL into pieces, and remove the blank start and the .html (or empty) end
+		$urlParts = explode ('/', $_SERVER['REQUEST_URI']);
+		array_pop ($urlParts);
+		array_shift ($urlParts);
+		
+		# Return the first as well as the constructed string if there are more than one, running through htmlentities to prevent XSS attacks
+		$bodyClass .= ' class="' . htmlentities ((count ($urlParts) > 1) ? $urlParts[0] . ' ' : '') . implode ('-', $urlParts) . '"';
+		
+		# Return the body class
+		return $bodyClass;
 	}
 	
 	
