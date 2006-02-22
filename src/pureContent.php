@@ -1,8 +1,8 @@
 <?php
 
 /*
- * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-5
- * Version 1.14
+ * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
+ * Version 1.15
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -144,6 +144,7 @@ class pureContent {
 					$browserline = ($browserlineFullHierarchy ? $browserline : '') . $dividingTextInBrowserLine . $contents;
 					
 					# Allow the behaviour to be overridden by including a behavioural hack file
+					#!# This should check that it can be included perhaps? ..
 					if ($behaviouralHackFile) {include $behaviouralHackFile;}
 				}
 			}
@@ -204,6 +205,8 @@ class pureContent {
 			# Include the menu file
 			if ($match == $location) {
 				if (!empty ($menufile)) {
+					#!# Hacked in 060222 - deals with non-top level sections like /foo/bar/ but hard-codes .menu.html ... ; arguably this is a more sensible system though, and avoids passing menu file along a chain
+					$menufile = $_SERVER['DOCUMENT_ROOT'] . $location . '/.menu.html';
 					if (file_exists ($menufile)) {
 						include ($menufile);
 					}
