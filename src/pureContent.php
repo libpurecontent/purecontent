@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.15
+ * Version 1.16
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -525,6 +525,7 @@ class highlightSearchTerms
 		
 		# Loop through each of the search words
 		$i = 0;
+		set_time_limit (60);	// Time limit set because the ending preg_match_all / str_replace below can time out as noted
 		foreach ($searchWords as $searchWord) {
 		    
 			# Stop further parsing if a large number of words have been supplied
