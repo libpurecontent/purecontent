@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.16
+ * Version 1.17
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -245,6 +245,45 @@ class pureContent {
 	}
 	
 	
+	# Function to combine a set of files having a submenu into a single page
+	function autocombine ($menufile = './menu.html', $div = 'autocombined')
+	{
+		# Get the links
+		$menu = file_get_contents ($menufile);
+		$links = preg_match_all ('|<a href="([^"]+)">([^<]+)</a>|', $menu, $linkMatches);
+		
+		# Start the HTML
+		$html = '';
+		
+		# Get each file's contents
+		foreach ($linkMatches[1] as $file) {
+			if ($file == './') {$file = 'index.html';}
+			$contents = file_get_contents ($file);
+			
+			# Cache the main title (using the first file)
+			if (!isSet ($mainTitle)) {
+				$title = preg_match ('|<h1([^>]*)>([^<]+)</h1>|', $contents, $headingMatches);
+				$mainTitle = $headingMatches[2];
+			}
+			
+			# Remove the heading
+			$contents = preg_replace ('|<h1([^>]*)>([^<]+)</h1>|', '', $contents);
+			
+			# Append the HTML
+			$html .= $contents;
+		}
+		
+		# Add the cached title
+		$html = "<h1>{$mainTitle}</h1>" . $html;
+		
+		# Surround with a div
+		$html = "<div class=\"{$div}\">{$html}</div>";
+		
+		# Show the HTML
+		return $html;
+	}
+	
+	
 	# Function to switch stylesheet style via a cookie
 	function switchStyle ($stylesheets, $directory)
 	{
@@ -334,7 +373,7 @@ class pureContent {
 	
 	
 	# Function to create a jumplist form
-	function htmlJumplist ($values, $selected = '', $action = '', $name = 'jumplist', $parentTabLevel = 0, $class = 'jumplist', $introductoryText = 'Go to:')
+	function htmlJumplist ($values, $selected = '', $action = '', $name = 'jumplist', $parentTabLevel = 0, $class = 'jumplist', $introductoryText = 'Go to:', $valueSubstitution = false)
 	{
 		# Return an empty string if no items
 		if (empty ($values)) {return '';}
@@ -344,7 +383,7 @@ class pureContent {
 		
 		# Build the list
 		foreach ($values as $value => $visible) {
-			$fragments[] = "<option value=\"{$value}\"" . ($value == $selected ? ' selected="selected"' : '') . ">$visible</option>";
+			$fragments[] = '<option value="' . ($valueSubstitution ? str_replace ('%value', $value, $valueSubstitution) : $value) . '"' . ($value == $selected ? ' selected="selected"' : '') . ">$visible</option>";
 		}
 		
 		# Construct the HTML
