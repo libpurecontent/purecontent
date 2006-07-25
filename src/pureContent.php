@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.17
+ * Version 1.18
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -67,7 +67,7 @@ class pureContent {
 	
 	
 	/**
-	 * Creates a navigation trail, assign a browser title and the correct menu, based on the present URL
+	 * Creates a navigation (breadcrumb) trail, assign a browser title and the correct menu, based on the present URL
 	 *
 	 * @param string $dividingTextOnPage		// The text which goes between each link on the page
 	 * @param string $dividingTextInBrowserLine	// The text between each link in the browser title bar; examples are &raquo; | || -  &#187; ; note that \ / < > shouldn't be used (they won't be bookmarked on Windows)
@@ -79,7 +79,7 @@ class pureContent {
 	 * @param string $sectionTitleFile			// The filename for the section information placed in each directory
 	 * @param string $menuTitleFile				// The filename for the submenu placed in each top-level directory
 	 */
-	function assignNavigation ($dividingTextOnPage = ' &#187; ', $dividingTextInBrowserLine = ' &#187; ', $introductoryText = 'You are in:  ', $homeText = 'Home', $enforceStrictBehaviour = false, $browserlineFullHierarchy = false, $homeLocation = '/', $sectionTitleFile = '.title.txt', $menuTitleFile = '.menu.html', $tildeRoot = '/home/', $behaviouralHackFile = '')
+	function assignNavigation ($dividingTextOnPage = ' &#187; ', $dividingTextInBrowserLine = ' &#187; ', $introductoryText = 'You are in:  ', $homeText = 'Home', $enforceStrictBehaviour = false, $browserlineFullHierarchy = false, $homeLocation = '/', $sectionTitleFile = '.title.txt', $menuTitleFile = '.menu.html', $tildeRoot = '/home/', $behaviouralHackFile = '', $linkToCurrent = false)
 	{
 		# Ensure the home location and tilde root ends with a trailing slash
 		if (substr ($homeLocation, -1) != '/') {$homeLocation .= '/';}
@@ -137,8 +137,9 @@ class pureContent {
 					# Trim white space and convert HTML entities
 					$contents = htmlentities (trim ($contents));
 					
-					# Build up the text and links in the location line, preceeded by the dividing text
-					$locationline .= $dividingTextOnPage . '<a href="' . ($tildeSite ? $homeLocation : '') . $link . '">' . $contents . '</a>';
+					# Build up the text and links in the location line, preceeded by the dividing text, adding a link unless on the current page and linkToCurrent being off
+					$target = ($tildeSite ? $homeLocation : '') . $link;
+					$locationline .= $dividingTextOnPage . (!$linkToCurrent && ($target == $_SERVER['REQUEST_URI']) ? $contents : '<a href="' . $target . '">' . $contents . '</a>');
 					
 					# Build up the text for the browser title
 					$browserline = ($browserlineFullHierarchy ? $browserline : '') . $dividingTextInBrowserLine . $contents;
