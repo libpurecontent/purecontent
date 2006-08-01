@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.18
+ * Version 1.19
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -430,7 +430,7 @@ class highlightSearchTerms
 		# Buffer the output
 		if (isSet ($referer['host'])) {
 			if ($referer['host'] != $_SERVER['HTTP_HOST']) {
-				ob_start (array ('highlightSearchTerms', 'wrapper')); 
+				ob_start (array ('highlightSearchTerms', 'outsideWrapper')); 
 			}
 		}
 	}
@@ -463,11 +463,17 @@ class highlightSearchTerms
 	}
 	
 	
+	# Outside wrapper as ob_start seems to have issues with multiple arguments
+	function outsideWrapper ($string) {
+		return highlightSearchTerms::wrapper ($string);
+	}
+	
+	
 	# Wrapper function
-	function wrapper ($string)
+	function wrapper ($string, $searchEngines = array ())
 	{
 		# Get the list of search engines and colours
-		$searchEngines = highlightSearchTerms::supportedSearchEngines ();
+		if (!$searchEngines) {$searchEngines = highlightSearchTerms::supportedSearchEngines ();}
 		$colours = highlightSearchTerms::availableColours ();
 		
 		# Obtain the query words (if any) from the referring page
