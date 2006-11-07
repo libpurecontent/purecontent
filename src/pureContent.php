@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.19
+ * Version 1.1.10
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -410,6 +410,28 @@ class pureContent {
 			$location = (eregi ('http://|https://', $_POST[$name]) ? '' : $_SERVER['_SITE_URL']) . $_POST[$name];
 			require_once ('application.php');
 			application::sendHeader (302, $location);
+		}
+	}
+	
+	
+	# Function to track redirects from one site to another, inserted into the prepended file
+	/* Assumes that some server configuration like the following exists for the site's virtualHost:
+	ServerAlias www.oldsite.example.com
+	RewriteCond %{HTTP_HOST}   !^www.newsite.example.com [NC]
+	RewriteRule ^/(.*) http://www.newsite.example.com/$1?newsite [L,R]
+	*/
+	function trackRedirects ($filename, $email, $queryString = 'newsite')
+	{
+		if ($_SERVER['QUERY_STRING'] == $queryString) {
+			$newUrl = str_replace ('?'. $queryString, '', $_SERVER['_PAGE_URL']);
+			if ($_SERVER['HTTP_REFERER']) {
+				$contents = file_get_contents ($filename);
+				if (strpos ($contents, $_SERVER['HTTP_REFERER']) === false) {
+					file_put_contents ($filename, 'Uncontacted' . "\t" . $newUrl . "\t" . $_SERVER['HTTP_REFERER'] . "\n", FILE_APPEND);
+					mail ($email, "Out-of-date link to be corrected for {$_SERVER['SERVER_NAME']}", "Referrer:\n{$_SERVER['HTTP_REFERER']}\n\nShould now link to:\n{$newUrl}", "From: {$email}");
+				}
+			}
+			header ("Location: {$newUrl}");
 		}
 	}
 }
