@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.1.10
+ * Version 1.1.11
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -26,17 +26,19 @@ class pureContent {
 		// $_SERVER['SCRIPT_FILENAME'];
 		
 		# Assign the domain name
-		// $_SERVER['SERVER_NAME'];
+		if (!isSet ($_SERVER['SERVER_NAME'])) {$_SERVER['SERVER_NAME'] = 'localhost';}	// Emulation for CGI/CLI mode
 		
 		# Assign the page location (i.e. the actual script opened), with index.html removed if it exists, starting from root
 		$_SERVER['PHP_SELF'] = ereg_replace ("/$directoryIndex\$", '/', $_SERVER['PHP_SELF']);
 		
 		# Assign the page location (i.e. the page address requested) with query, removing double-slashes and the directory index
+		if (!isSet ($_SERVER['REQUEST_URI'])) {$_SERVER['REQUEST_URI'] = ereg_replace ('^' . $_SERVER['DOCUMENT_ROOT'], '', $_SERVER['SCRIPT_FILENAME']);}	// Emulation for CGI/CLI mode
 		$currentPath = ereg_replace ("/$directoryIndex\$", '/', $_SERVER['REQUEST_URI']);
 		while (strpos ($currentPath, '//') !== false) {$currentPath = str_replace ('//', '/', $currentPath);}
 		$_SERVER['REQUEST_URI'] = $currentPath;
 		
 		# Assign the current server protocol type and version
+		if (!isSet ($_SERVER['SERVER_PROTOCOL'])) {$_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';}	// Emulation for CGI-CLI mode
 		list ($protocolType, $_SERVER['_SERVER_PROTOCOL_VERSION']) = explode ('/', $_SERVER['SERVER_PROTOCOL']);
 		$_SERVER['_SERVER_PROTOCOL_TYPE'] = strtolower ($protocolType);
 		
@@ -50,7 +52,7 @@ class pureContent {
 		// $_SERVER['SCRIPT_URL'];
 		
 		# Assign the query string (for the few cases, e.g. a 404, where a REDIRECT_QUERY_STRING is generated instead
-		$_SERVER['QUERY_STRING'] = (isSet ($_SERVER['REDIRECT_QUERY_STRING']) ? $_SERVER['REDIRECT_QUERY_STRING'] : $_SERVER['QUERY_STRING']);
+		$_SERVER['QUERY_STRING'] = (isSet ($_SERVER['REDIRECT_QUERY_STRING']) ? $_SERVER['REDIRECT_QUERY_STRING'] : (isSet ($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : ''));
 		
 		# Assign the referring page
 		$_SERVER['HTTP_REFERER'] = (isSet ($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '');
