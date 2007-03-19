@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.1.11
+ * Version 1.1.12
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -503,11 +503,8 @@ class highlightSearchTerms
 		# Obtain the query words (if any) from the referring page
 		if ($queryWords = highlightSearchTerms::obtainQueryWords ($searchEngines)) {
 			
-			# Introduce the HTML
-			$html = '<p class="referer">Words you searched for have been highlighted.</p>' . "\n";
-			
 			# Modify the HTML
-			$html .= highlightSearchTerms::replaceHtml ($string, $queryWords, $colours, $limitWords = 8);
+			$html = highlightSearchTerms::replaceHtml ($string, $queryWords, $colours);
 			
 			# Return the HTML
 			return $html;
@@ -581,7 +578,7 @@ class highlightSearchTerms
 	
 	
 	# Function to highlight search terms based on GPL'ed script by Eric Bodden - see www.bodden.de/projects/php/
-	function replaceHtml ($html, $searchWords, $colours = 'yellow', $limitWords = 8)
+	function replaceHtml ($html, $searchWords, $colours = 'yellow', $limitHtmlBytesSize = 20000, $limitWords = 4, $timeLimitSeconds = 60)
 	{
 		# Assign the colours to be used, into an array
 		if (!is_array ($colours)) {
@@ -593,13 +590,16 @@ class highlightSearchTerms
 		# Count the number of colours available
 		$totalColours = count ($colours);
 		
+		# Prevent timeouts in PHP due to parsing large files for large numbers of words
+		set_time_limit ($timeLimitSeconds);	// Time limit set because the ending preg_match_all / str_replace below can time out as noted
+		$pageLength = strlen ($html);
+		
 		# Loop through each of the search words
 		$i = 0;
-		set_time_limit (60);	// Time limit set because the ending preg_match_all / str_replace below can time out as noted
 		foreach ($searchWords as $searchWord) {
 		    
 			# Stop further parsing if a large number of words have been supplied
-			if ($i == $limitWords) {break;}
+			if (($pageLength > $limitHtmlBytesSize) && ($i == $limitWords)) {break;}
 			
 			# Escape slashes to prevent PCRE errors as listed on www.php.net/pcre.pattern.syntax
 			$searchWord = preg_quote ($searchWord, '/');
@@ -619,8 +619,7 @@ class highlightSearchTerms
 					break;
 			}
 			
-			# Loop through each of the matches; NB This sometimes times out (due to lots of words on a long page), but there's little that can be done, other than stopping replacement half-way through
-			#!# Clean this up
+			# Loop through each of the matches
 			foreach ($matches[0] as $match) {
 				preg_match ("/$searchWord/i", $match, $out);
 				$case_sensitive_searchWord = $out[0];
@@ -631,8 +630,10 @@ class highlightSearchTerms
 			$i++;
 		}
 		
+		# Introduce the HTML
+		$html = '<p class="referer">Words you searched for have been highlighted.</p>' . "\n" . $html;
+		
 		# Return the result
-		#!# This could be undefined...
 		return $html;
 	}
 }
