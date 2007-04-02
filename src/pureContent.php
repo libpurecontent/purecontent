@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.1.12
+ * Version 1.1.13
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -577,8 +577,8 @@ class highlightSearchTerms
 	}
 	
 	
-	# Function to highlight search terms based on GPL'ed script by Eric Bodden - see www.bodden.de/projects/php/
-	function replaceHtml ($html, $searchWords, $colours = 'yellow', $limitHtmlBytesSize = 20000, $limitWords = 4, $timeLimitSeconds = 60)
+	# Function to highlight search terms very loosely based on GPL'ed script by Eric Bodden - see www.bodden.de/projects/php/
+	function replaceHtml ($html, $searchWords, $colours = 'yellow')
 	{
 		# Assign the colours to be used, into an array
 		if (!is_array ($colours)) {
@@ -590,45 +590,43 @@ class highlightSearchTerms
 		# Count the number of colours available
 		$totalColours = count ($colours);
 		
-		# Prevent timeouts in PHP due to parsing large files for large numbers of words
-		set_time_limit ($timeLimitSeconds);	// Time limit set because the ending preg_match_all / str_replace below can time out as noted
-		$pageLength = strlen ($html);
+		# Unique the words to make the regexp more efficient then ensure they are in string-length order (so that e.g. 'and' will match before 'an')
+		$searchWords = array_unique ($searchWords);
+		$ordering = create_function ('$a, $b', 'return strlen ($b) - strlen ($a);');
+		usort ($searchWords, $ordering);
 		
-		# Loop through each of the search words
-		$i = 0;
-		foreach ($searchWords as $searchWord) {
-		    
-			# Stop further parsing if a large number of words have been supplied
-			if (($pageLength > $limitHtmlBytesSize) && ($i == $limitWords)) {break;}
-			
-			# Escape slashes to prevent PCRE errors as listed on www.php.net/pcre.pattern.syntax
-			$searchWord = preg_quote ($searchWord, '/');
-			
-			# Run a regexp match and put the matches into $matches[0]
-			$regexpStart = '>[^<]*(';
-			$regexpEnd = ')[^<]*<';
-			preg_match_all (('/' . $regexpStart . $searchWord . $regexpEnd . '/i'), $html, $matches, PREG_PATTERN_ORDER);
-			
-			# Assign whether to use class="highlight" or style="background-color: foo;"
-			switch ($colours[0]) {
-				case 'referer':
-					$highlightCodeStart = '<span class="referer">';
-					break;
-				default:
-					$highlightCodeStart = '<span style="background-color: ' . $colours[($i % $totalColours)] . ';">';
-					break;
-			}
-			
-			# Loop through each of the matches
-			foreach ($matches[0] as $match) {
-				preg_match ("/$searchWord/i", $match, $out);
-				$case_sensitive_searchWord = $out[0];
-				$newtext = str_replace ($case_sensitive_searchWord, ($highlightCodeStart . $case_sensitive_searchWord . '</span>'), $match);
-				$html = str_replace ($match, $newtext, $html);
-			}
-			
-			$i++;
+		# Escape slashes to prevent PCRE errors as listed on www.php.net/pcre.pattern.syntax and ensure alignment with word boundaries
+		foreach ($searchWords as $index => $searchWord) {
+		    $searchWords[$index] = preg_quote (trim ($searchWord), '/');
 		}
+		
+		# Prepare the regexp
+		$regexpStart = '>[^<]*\b(';
+		$regexpEnd = ')\b[^<]*<';
+		$searchWords = implode ('|', $searchWords);
+		$phraseRegexp = $regexpStart . $searchWords . $regexpEnd;
+		
+		# Perform a regexp match to extract the matched phrases or end at this point if none found
+		if (!preg_match_all (('/' . $phraseRegexp . '/i'), $html, $phrases, PREG_PATTERN_ORDER)) {
+			return $html;
+		}
+		
+		# Determine the regexp to match words in each pre-matched phrase
+		$wordRegexp = '/\b(' . $searchWords . ')\b/i';
+		
+		# Loop through each matched phrase
+		$replacements = array ();
+		foreach ($phrases[0] as $index => $phrase) {
+			
+			# Assign whether to use class or span in the referrer
+			$highlightCodeStart = ($colours[0] == 'referer' ? '<span class="referer">' : '<span style="background-color: ' . $colours[($index % $totalColours)] . ';">');
+			
+			# Match the words
+			$replacements[$index] = preg_replace ($wordRegexp, "{$highlightCodeStart}\\1</span>", $phrase);
+		}
+		
+		# Globally replace each phrase with each replacements back into the overall HTML
+		$html = str_replace ($phrases[0], $replacements, $html);
 		
 		# Introduce the HTML
 		$html = '<p class="referer">Words you searched for have been highlighted.</p>' . "\n" . $html;
