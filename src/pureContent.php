@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.1.13
+ * Version 1.1.14
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -137,7 +137,7 @@ class pureContent {
 					fclose ($fileHandle);
 					
 					# Trim white space and convert HTML entities
-					$contents = htmlentities (trim ($contents));
+					$contents = htmlentities (trim ($contents), ENT_COMPAT, 'UTF-8');
 					
 					# Build up the text and links in the location line, preceeded by the dividing text, adding a link unless on the current page and linkToCurrent being off
 					$target = ($tildeSite ? $homeLocation : '') . $link;
