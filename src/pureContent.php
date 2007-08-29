@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.1.14
+ * Version 1.1.15
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -578,7 +578,7 @@ class highlightSearchTerms
 	
 	
 	# Function to highlight search terms very loosely based on GPL'ed script by Eric Bodden - see www.bodden.de/projects/php/
-	function replaceHtml ($html, $searchWords, $colours = 'yellow')
+	function replaceHtml ($html, $searchWords, $colours = 'yellow', $sourceAsTextOnly = false, $showIndication = true)
 	{
 		# Assign the colours to be used, into an array
 		if (!is_array ($colours)) {
@@ -601,8 +601,8 @@ class highlightSearchTerms
 		}
 		
 		# Prepare the regexp
-		$regexpStart = '>[^<]*\b(';
-		$regexpEnd = ')\b[^<]*<';
+		$regexpStart = ($sourceAsTextOnly ? '\b' : '>[^<]*\b(');
+		$regexpEnd = ($sourceAsTextOnly ? '\b' : ')\b[^<]*<');
 		$searchWords = implode ('|', $searchWords);
 		$phraseRegexp = $regexpStart . $searchWords . $regexpEnd;
 		
@@ -629,7 +629,9 @@ class highlightSearchTerms
 		$html = str_replace ($phrases[0], $replacements, $html);
 		
 		# Introduce the HTML
-		$html = '<p class="referer">Words you searched for have been highlighted.</p>' . "\n" . $html;
+		if ($showIndication) {
+			$html = '<p class="referer">Words you searched for have been highlighted.</p>' . "\n" . $html;
+		}
 		
 		# Return the result
 		return $html;
