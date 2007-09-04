@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.1.15
+ * Version 1.1.16
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -81,7 +81,7 @@ class pureContent {
 	 * @param string $sectionTitleFile			// The filename for the section information placed in each directory
 	 * @param string $menuTitleFile				// The filename for the submenu placed in each top-level directory
 	 */
-	function assignNavigation ($dividingTextOnPage = ' &#187; ', $dividingTextInBrowserLine = ' &#187; ', $introductoryText = 'You are in:  ', $homeText = 'Home', $enforceStrictBehaviour = false, $browserlineFullHierarchy = false, $homeLocation = '/', $sectionTitleFile = '.title.txt', $menuTitleFile = '.menu.html', $tildeRoot = '/home/', $behaviouralHackFile = '', $linkToCurrent = false)
+	function assignNavigation ($dividingTextOnPage = ' &#187; ', $dividingTextInBrowserLine = ' &#187; ', $introductoryText = 'You are in:  ', $homeText = 'Home', $enforceStrictBehaviour = false, $browserlineFullHierarchy = false, $homeLocation = '/', $sectionTitleFile = '.title.txt', $menuTitleFile = '.menu.html', $tildeRoot = '/home/', $behaviouralHackFile = '/sitetech/assignNavigationHack.html', $linkToCurrent = false)
 	{
 		# Ensure the home location and tilde root ends with a trailing slash
 		if (substr ($homeLocation, -1) != '/') {$homeLocation .= '/';}
@@ -147,8 +147,9 @@ class pureContent {
 					$browserline = ($browserlineFullHierarchy ? $browserline : '') . $dividingTextInBrowserLine . $contents;
 					
 					# Allow the behaviour to be overridden by including a behavioural hack file
-					#!# This should check that it can be included perhaps? ..
-					if ($behaviouralHackFile) {include $behaviouralHackFile;}
+					if ($behaviouralHackFile && file_exists ($_SERVER['DOCUMENT_ROOT'] . $behaviouralHackFile)) {
+						include ($_SERVER['DOCUMENT_ROOT'] . $behaviouralHackFile);
+					}
 				}
 			}
 			
