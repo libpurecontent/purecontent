@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.1.16
+ * Version 1.1.17
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -562,7 +562,7 @@ class highlightSearchTerms
 					list ($discarded, $queryPhrase) = explode ('=', $queryTerm);
 					
 					# Strip " (which is encoded as %22) from the query
-					$queryPhrase = str_replace ('%22', '', $queryPhrase);
+					$queryPhrase = trim (str_replace ('%22', '', $queryPhrase));
 					
 					# Split the query phrase into words demarcated by +
 					$queryWords = explode ('+', $queryPhrase);
@@ -600,6 +600,23 @@ class highlightSearchTerms
 		foreach ($searchWords as $index => $searchWord) {
 		    $searchWords[$index] = preg_quote (trim ($searchWord), '/');
 		}
+		
+		# Remove empty search words (i.e. whitespace) to prevent timeouts
+		foreach ($searchWords as $index => $phrase) {
+			if (trim ($phrase) == '') {
+				unset ($searchWords[$index]);
+			}
+		}
+		
+		/*
+		# Prevent timeouts with large numbers of words in large documents
+		$length = strlen ($html);
+		foreach ($searchWords as $index => $phrase) {
+			if ((strlen ($html) > 100000) && ($index > 6)) {
+				unset ($searchWords[$index]);
+			}
+		}
+		*/
 		
 		# Prepare the regexp
 		$regexpStart = ($sourceAsTextOnly ? '\b' : '>[^<]*\b(');
