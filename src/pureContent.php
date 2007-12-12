@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.1.17
+ * Version 1.1.18
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -231,10 +231,28 @@ class pureContent {
 		// No action
 		
 		# Start with the site URL if wanted
-		$bodyClass = ($addSiteUrl ? ' id="' . htmlentities (str_replace ('.', '-', $_SERVER['SERVER_NAME'])) . '"' : '');
+		$bodyAttributes  = ($addSiteUrl ? ' id="' . pureContent::bodyAttributesId () . '"' : '');
 		
+		# Add the class
+		$bodyAttributes .= ' class="' . pureContent::bodyAttributesClass () . '"';
+		
+		# Return the compiled string
+		return $bodyAttributes;
+	}
+	
+	
+	# Function to obtain id for bodyAttributes
+	function bodyAttributesId ()
+	{
+		return htmlentities (str_replace ('.', '-', $_SERVER['SERVER_NAME']));
+	}
+	
+	
+	# Function to obtain class for bodyAttributes
+	function bodyAttributesClass ()
+	{
 		# Return 'home' if no subdirectory
-		if (substr_count ($_SERVER['REQUEST_URI'], '/') < 2) {return $bodyClass . ' class="homepage"';}
+		if (substr_count ($_SERVER['REQUEST_URI'], '/') < 2) {return 'homepage';}
 		
 		# Split the URL into pieces, and remove the blank start and the .html (or empty) end
 		$urlParts = explode ('/', $_SERVER['REQUEST_URI']);
@@ -242,10 +260,7 @@ class pureContent {
 		array_shift ($urlParts);
 		
 		# Return the first as well as the constructed string if there are more than one, running through htmlentities to prevent XSS attacks
-		$bodyClass .= ' class="' . htmlentities ((count ($urlParts) > 1) ? $urlParts[0] . ' ' : '') . implode ('-', $urlParts) . '"';
-		
-		# Return the body class
-		return $bodyClass;
+		return htmlentities ((count ($urlParts) > 1) ? $urlParts[0] . ' ' : '') . implode ('-', $urlParts);
 	}
 	
 	
