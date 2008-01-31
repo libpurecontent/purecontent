@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.1.18
+ * Version 1.1.19
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -201,7 +201,8 @@ class pureContent {
 			}
 			
 			# Show the link
-			echo "\n$tabs\t" . '<li class="' . str_replace (array ('/', ':', '.'), array ('', '-', '-'), $location) . ($match == $location ? " $cssSelected" : '') . (($spaced) ? ' spaced' : '') . "\"><a href=\"$location\">$description</a>";
+			$class = str_replace (array ('/', ':', '.'), array ('', '-', '-'), $location);
+			echo "\n$tabs\t" . '<li class="' . $class . ($match == $location ? " $cssSelected" : '') . (($spaced) ? ' spaced' : '') . "\"><a class=\"{$class}\" href=\"$location\">$description</a>";
 			
 			# Reset the spacer flag
 			$spaced = false;
