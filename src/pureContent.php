@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.1.19
+ * Version 1.2.0
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -137,7 +137,7 @@ class pureContent {
 					fclose ($fileHandle);
 					
 					# Trim white space and convert HTML entities
-					$contents = htmlentities (trim ($contents), ENT_COMPAT, 'UTF-8');
+					$contents = htmlspecialchars (trim ($contents));
 					
 					# Build up the text and links in the location line, preceeded by the dividing text, adding a link unless on the current page and linkToCurrent being off
 					$target = ($tildeSite ? $homeLocation : '') . $link;
@@ -232,10 +232,10 @@ class pureContent {
 		// No action
 		
 		# Start with the site URL if wanted
-		$bodyAttributes  = ($addSiteUrl ? ' id="' . pureContent::bodyAttributesId () . '"' : '');
+		$bodyAttributes  = ($addSiteUrl ? ' id="' . htmlspecialchars (pureContent::bodyAttributesId ()) . '"' : '');
 		
 		# Add the class
-		$bodyAttributes .= ' class="' . pureContent::bodyAttributesClass () . '"';
+		$bodyAttributes .= ' class="' . htmlspecialchars (pureContent::bodyAttributesClass ()) . '"';
 		
 		# Return the compiled string
 		return $bodyAttributes;
@@ -245,7 +245,7 @@ class pureContent {
 	# Function to obtain id for bodyAttributes
 	function bodyAttributesId ()
 	{
-		return htmlentities (str_replace ('.', '-', $_SERVER['SERVER_NAME']));
+		return str_replace ('.', '-', $_SERVER['SERVER_NAME']);
 	}
 	
 	
@@ -260,8 +260,8 @@ class pureContent {
 		array_pop ($urlParts);
 		array_shift ($urlParts);
 		
-		# Return the first as well as the constructed string if there are more than one, running through htmlentities to prevent XSS attacks
-		return htmlentities ((count ($urlParts) > 1) ? $urlParts[0] . ' ' : '') . implode ('-', $urlParts);
+		# Return the first as well as the constructed string if there are more than one
+		return ((count ($urlParts) > 1) ? $urlParts[0] . ' ' : '') . implode ('-', $urlParts);
 	}
 	
 	
