@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.2.0
+ * Version 1.2.1
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -30,6 +30,7 @@ class pureContent {
 		
 		# Assign the page location (i.e. the actual script opened), with index.html removed if it exists, starting from root
 		$_SERVER['PHP_SELF'] = ereg_replace ("/$directoryIndex\$", '/', $_SERVER['PHP_SELF']);
+		$_SERVER['SCRIPT_NAME'] = ereg_replace ("/$directoryIndex\$", '/', $_SERVER['SCRIPT_NAME']);
 		
 		# Assign the page location (i.e. the page address requested) with query, removing double-slashes and the directory index
 		if (!isSet ($_SERVER['REQUEST_URI'])) {$_SERVER['REQUEST_URI'] = ereg_replace ('^' . $_SERVER['DOCUMENT_ROOT'], '', $_SERVER['SCRIPT_FILENAME']);}	// Emulation for CGI/CLI mode
