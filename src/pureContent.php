@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.2.1
+ * Version 1.2.2
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -263,6 +263,19 @@ class pureContent {
 		
 		# Return the first as well as the constructed string if there are more than one
 		return ((count ($urlParts) > 1) ? $urlParts[0] . ' ' : '') . implode ('-', $urlParts);
+	}
+	
+	
+	# Function to provide an edit link if using pureContentEditor
+	function editLink ($internalHostRegexp, $port = 8080, $class = 'editlink')
+	{
+		# If the host matches and the port is not the edit port, give a link
+		if (ereg ($internalHostRegexp, gethostbyaddr ($_SERVER['REMOTE_ADDR'])) && ($_SERVER['SERVER_PORT'] != $port)) {
+			return "<p class=\"{$class}\"><a href=\"http://{$_SERVER['SERVER_NAME']}:{$port}{$_SERVER['REQUEST_URI']}\">[Edit&nbsp;this&nbsp;page]</a></p>";
+		}
+		
+		# Otherwise return an empty string
+		return '';
 	}
 	
 	
