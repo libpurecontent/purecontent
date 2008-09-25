@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.2.2
+ * Version 1.3.0
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -165,7 +165,7 @@ class pureContent {
 	
 	
 	# Define a function to generate the menu
-	function generateMenu ($menu, $cssSelected = 'selected', $parentTabLevel = 2, $orphanedDirectories = array (), $menufile = '')
+	function generateMenu ($menu, $cssSelected = 'selected', $parentTabLevel = 2, $orphanedDirectories = array (), $menufile = '', $id = NULL)
 	{
 		# Ensure the orphanedDirectories supplied is an array
 		if (!is_array ($orphanedDirectories)) {$orphanedDirectories = array ();}
@@ -191,7 +191,7 @@ class pureContent {
 		$tabs = str_repeat ("\t", ($parentTabLevel));
 		
 		# Create the HTML
-		echo "\n$tabs<ul>";
+		echo "\n$tabs<ul" . ($id ? " id=\"{$id}\"" : '') . '>';
 		$spaced = false;
 		foreach ($menu as $location => $description) {
 			
@@ -443,7 +443,11 @@ class pureContent {
 			$location = (eregi ('http://|https://', $_POST[$name]) ? '' : $_SERVER['_SITE_URL']) . $_POST[$name];
 			require_once ('application.php');
 			application::sendHeader (302, $location);
+			return true;
 		}
+		
+		# Otherwise return an empty status
+		return NULL;
 	}
 	
 	
@@ -608,8 +612,8 @@ class highlightSearchTerms
 	}
 	
 	
-	# Function to highlight search terms very loosely based on GPL'ed script by Eric Bodden - see www.bodden.de/projects/php/
-	function replaceHtml ($html, $searchWords, $colours = 'yellow', $sourceAsTextOnly = false, $showIndication = true)
+	# Function to highlight search terms very loosely based on GPL'ed script by Eric Bodden - see www.bodden.de/legacy/php-scripts/
+	function replaceHtml ($html, $searchWords, $colours = 'yellow', $sourceAsTextOnly = false, $showIndication = true, $unicode = true)
 	{
 		# Assign the colours to be used, into an array
 		if (!is_array ($colours)) {
@@ -628,7 +632,8 @@ class highlightSearchTerms
 		
 		# Escape slashes to prevent PCRE errors as listed on www.php.net/pcre.pattern.syntax and ensure alignment with word boundaries
 		foreach ($searchWords as $index => $searchWord) {
-		    $searchWords[$index] = preg_quote (trim ($searchWord), '/');
+			if ($unicode) {$searchWord = html_entity_decode (preg_replace ("/%u([0-9a-f]{3,4})/i","&#x\\1;", urldecode ($searchWord)), NULL, 'UTF-8');}	// UTF8-compliant version of urldecode
+			$searchWords[$index] = preg_quote (trim ($searchWord), '/');
 		}
 		
 		# Remove empty search words (i.e. whitespace) to prevent timeouts
@@ -649,32 +654,40 @@ class highlightSearchTerms
 		*/
 		
 		# Prepare the regexp
-		$regexpStart = ($sourceAsTextOnly ? '\b' : '>[^<]*\b(');
-		$regexpEnd = ($sourceAsTextOnly ? '\b' : ')\b[^<]*<');
+		$regexpStart = ($sourceAsTextOnly ? '\b(' : '>[^<]*\b(');
+		$regexpEnd = ($sourceAsTextOnly ? ')\b' : ')\b[^<]*<');
 		$searchWords = implode ('|', $searchWords);
 		$phraseRegexp = $regexpStart . $searchWords . $regexpEnd;
 		
 		# Perform a regexp match to extract the matched phrases or end at this point if none found
-		if (!preg_match_all (('/' . $phraseRegexp . '/i'), $html, $phrases, PREG_PATTERN_ORDER)) {
+		if (!preg_match_all (('/' . $phraseRegexp . '/i' . ($unicode ? 'u' : '')), $html, $phrases, PREG_PATTERN_ORDER)) {
 			return $html;
 		}
 		
 		# Determine the regexp to match words in each pre-matched phrase
-		$wordRegexp = '/\b(' . $searchWords . ')\b/i';
+		$wordRegexp = '\b(' . $searchWords . ')\b';
 		
 		# Loop through each matched phrase
 		$replacements = array ();
+		$phrases[0] = array_unique ($phrases[0]);
 		foreach ($phrases[0] as $index => $phrase) {
 			
 			# Assign whether to use class or span in the referrer
 			$highlightCodeStart = ($colours[0] == 'referer' ? '<span class="referer">' : '<span style="background-color: ' . $colours[($index % $totalColours)] . ';">');
 			
 			# Match the words
-			$replacements[$index] = preg_replace ($wordRegexp, "{$highlightCodeStart}\\1</span>", $phrase);
+			$replacements[$index] = preg_replace ('/' . $wordRegexp . '/i' . ($unicode ? 'u' : ''), "{$highlightCodeStart}\\1</span>", $phrase);
 		}
 		
-		# Globally replace each phrase with each replacements back into the overall HTML
-		$html = str_replace ($phrases[0], $replacements, $html);
+		# Globally replace each phrase with each replacements back into the overall HTML; for text-only (i.e. non-HTML) matching, add word-boundaries to prevent 'a' etc being picked up in <span> etc.
+		if ($sourceAsTextOnly) {
+			foreach ($phrases[0] as $index => $phrase) {
+				$phrases[0][$index] = '/\b' . preg_quote ($phrase) . '\b/i' . ($unicode ? 'u' : '');
+			}
+			$html = preg_replace ($phrases[0], $replacements, $html);
+		} else {
+			$html = str_replace ($phrases[0], $replacements, $html);
+		}
 		
 		# Introduce the HTML
 		if ($showIndication) {
