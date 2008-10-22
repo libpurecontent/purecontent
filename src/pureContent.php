@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.3.0
+ * Version 1.4.0
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -448,6 +448,70 @@ class pureContent {
 		
 		# Otherwise return an empty status
 		return NULL;
+	}
+	
+	
+	# Function to set a cookie for content-negotiation language setting
+	function languageSelection ($languages = array ('en' => 'English', ), $postName = 'language', $imageLocation = '/images/flags/', $ulClass = 'language', $cookieName = 'language', $cookieDays = 30, $cookiePath = '/')
+	{
+		/*  NB Apache would need something like:
+			<Directory /path/to/webroot/>
+				Options +MultiViews
+				DirectoryIndex index
+			</Directory>
+			LanguagePriority en es it de hr
+			ForceLanguagePriority Fallback
+			SetEnvIf Cookie "language=([-a-z]+)" prefer-language=$1
+		*/
+		
+		# Set the language if the form has been posted and the language is supported
+		$languageClicked = false;
+		foreach ($languages as $language => $label) {
+			$key = "{$postName}_{$language}";	// This whole checking of _x and _y and checking the key rather than value is due to IE6/7 bugs in <input type="image"> and <button>
+			if (isSet ($_POST[$key . '_x']) && isSet ($_POST[$key . '_y'])) {
+				$languageClicked = $language;
+			}
+		}
+		
+		# Set the cookie if the language is valid, otherwise ignore this as post spam
+		if ($languageClicked) {
+			if (array_key_exists ($languageClicked, $languages)) {
+				setcookie ($cookieName, $languageClicked, time()+60*60*24*$cookieDays, $cookiePath);
+				header ('Location: ' . $_SERVER['_PAGE_URL']);
+			}
+		}
+		
+		# Obtain the languages set in the environment, which will be used to mark the current language visually and set a global
+		$cookieLanguage = (isSet ($_COOKIE[$cookieName]) ? $_COOKIE[$cookieName] : NULL);
+		if ($cookieLanguage) {$cookieLanguage = (isSet ($languages[$cookieLanguage]) ? $cookieLanguage : NULL);}
+		$browserLanguage = (isSet ($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? ereg_replace ('^([a-z]+)(,|-)(.+)$', '\1', $_SERVER['HTTP_ACCEPT_LANGUAGE']) : NULL);
+		if ($browserLanguage) {$browserLanguage = (isSet ($languages[$browserLanguage]) ? $browserLanguage : NULL);}
+		$serverPreferLanguage = (isSet ($_SERVER['prefer-language']) ? $_SERVER['prefer-language'] : NULL);
+		if ($serverPreferLanguage) {$serverPreferLanguage = (isSet ($languages[$serverPreferLanguage]) ? $serverPreferLanguage : NULL);}
+		$defaultLanguage = NULL;
+		foreach ($languages as $language => $label) {
+			$defaultLanguage = $language;
+			break;
+		}
+		
+		# Determine which language is set, defaulting to the first one
+		$currentLanguage = ($cookieLanguage ? $cookieLanguage : ($browserLanguage ? $browserLanguage : ($serverPreferLanguage ? $serverPreferLanguage : $defaultLanguage)));
+		
+		# Export the current language into the global server scope
+		$_SERVER['_LANGUAGE'] = $currentLanguage;
+		
+		# Construct the HTML
+		$html  = "\n\t\t\t\t" . '<form action="' . htmlspecialchars ($_SERVER['REQUEST_URI']) . '" method="post">';
+		$html .= "\n\t\t\t\t\t<ul class=\"{$ulClass}\">";
+		$html .= "\n\t\t\t\t\t\t<li>Language:</li>";
+		foreach ($languages as $language => $label) {
+			$html .= "\n\t\t\t\t\t\t" . '<li' . ($language == $currentLanguage ? ' class="selected"' : '') . '><input type="image" name="' . htmlspecialchars ($postName) . '_' . htmlspecialchars ($language) . '" value="' . $language . '" src="' . $imageLocation . $language . '.png" title="' . $label . '" /></li>';
+		}
+		$html .= "\n\t\t\t\t\t</ul>";
+		$html .= "\n\t\t\t\t</form>";
+		
+		# Return the HTML
+		return $html;
 	}
 	
 	
