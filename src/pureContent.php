@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-8
- * Version 1.4.1
+ * Version 1.4.2
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -712,7 +712,7 @@ class highlightSearchTerms
 		
 		# Escape slashes to prevent PCRE errors as listed on www.php.net/pcre.pattern.syntax and ensure alignment with word boundaries
 		foreach ($searchWords as $index => $searchWord) {
-			if ($unicode) {$searchWord = html_entity_decode (preg_replace ("/%u([0-9a-f]{3,4})/i", "&#x\\1;", urldecode ($searchWord)), NULL, 'UTF-8');}	// UTF8-compliant version of urldecode
+			if ($unicode) {$searchWord = html_entity_decode (preg_replace ("/%u([0-9a-f]{3,4})/i" . ($unicode ? 'u' : ''), "&#x\\1;", urldecode ($searchWord)), NULL, 'UTF-8');}	// UTF8-compliant version of urldecode
 			$searchWords[$index] = preg_quote (trim ($searchWord), '/');
 		}
 		
@@ -762,7 +762,7 @@ class highlightSearchTerms
 		# Globally replace each phrase with each replacements back into the overall HTML; for text-only (i.e. non-HTML) matching, add word-boundaries to prevent 'a' etc being picked up in <span> etc.
 		if ($sourceAsTextOnly) {
 			foreach ($phrases[0] as $index => $phrase) {
-				$phrases[0][$index] = '/\b' . preg_quote ($phrase) . '\b/i' . ($unicode ? 'u' : '');
+				$phrases[0][$index] = '/\b' . preg_quote ($phrase, '/') . '\b/i' . ($unicode ? 'u' : '');
 			}
 			$html = preg_replace ($phrases[0], $replacements, $html);
 		} else {
