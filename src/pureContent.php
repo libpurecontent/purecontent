@@ -1,8 +1,8 @@
 <?php
 
 /*
- * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-6
- * Version 1.4.0
+ * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-8
+ * Version 1.4.1
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -128,14 +128,12 @@ class pureContent {
 				$filename = $serverRoot . $link . $sectionTitleFile;
 				
 				# Check whether the file exists; stop the loop if strict hierarchy mode is on
-				if (!file_exists ($filename)) {
+				if (!is_readable ($filename)) {
 					if ($enforceStrictBehaviour) {break;}
 				} else {
 					
 					# Obtain the contents of the file
-					$fileHandle = fopen ($filename, 'r');
-					$contents = fread ($fileHandle, filesize ($filename));
-					fclose ($fileHandle);
+					$contents = file_get_contents ($filename);
 					
 					# Trim white space and convert HTML entities
 					$contents = htmlspecialchars (trim ($contents));
@@ -318,6 +316,24 @@ class pureContent {
 	}
 	
 	
+	# Function to create tabs and assign the current tab
+	function tabs ($pages, $selectedClass = 'selected', $class = 'tabs', $indent = 0)
+	{
+		# Create the tabs
+		$tabs = array ();
+		foreach ($pages as $page => $label) {
+			$selected = ($page == $_SERVER['REQUEST_URI'] ? " class=\"{$selectedClass}\"" : '');
+			$tabs[] = "<li{$selected}><a href=\"{$page}\">{$label}</a></li>";
+		}
+		
+		# Compile the HTML
+		$html  = "\n<ul class=\"{$class}\">" . implode ("\n\t", $tabs) . "\n</ul>";
+		
+		# Return the HTML
+		return $html;
+	}
+	
+	
 	# Function to switch stylesheet style via a cookie
 	function switchStyle ($stylesheets, $directory)
 	{
@@ -407,7 +423,7 @@ class pureContent {
 	
 	
 	# Function to create a jumplist form
-	function htmlJumplist ($values, $selected = '', $action = '', $name = 'jumplist', $parentTabLevel = 0, $class = 'jumplist', $introductoryText = 'Go to:', $valueSubstitution = false)
+	function htmlJumplist ($values, $selected = '', $action = '', $name = 'jumplist', $parentTabLevel = 0, $class = 'jumplist', $introductoryText = 'Go to:', $valueSubstitution = false, $onchangeJavascript = true)
 	{
 		# Return an empty string if no items
 		if (empty ($values)) {return '';}
@@ -423,7 +439,7 @@ class pureContent {
 		# Construct the HTML
 		$html  = "\n\n$tabs" . "<div class=\"$class\">$introductoryText";
 		$html .= "\n$tabs\t" . "<form method=\"post\" action=\"$action\" name=\"$name\">";
-		$html .= "\n$tabs\t\t" . "<select name=\"$name\">";
+		$html .= "\n$tabs\t\t" . "<select name=\"$name\"" . ($onchangeJavascript ? ' onchange="window.location.href=this[selectedIndex].value"' : '') . '>';
 		$html .= "\n$tabs\t\t\t" . implode ("\n$tabs\t\t\t", $fragments);
 		$html .= "\n$tabs\t\t" . '</select>';
 		$html .= "\n$tabs\t\t" . '<input type="submit" value="Go!" class="button" />';
@@ -696,7 +712,7 @@ class highlightSearchTerms
 		
 		# Escape slashes to prevent PCRE errors as listed on www.php.net/pcre.pattern.syntax and ensure alignment with word boundaries
 		foreach ($searchWords as $index => $searchWord) {
-			if ($unicode) {$searchWord = html_entity_decode (preg_replace ("/%u([0-9a-f]{3,4})/i","&#x\\1;", urldecode ($searchWord)), NULL, 'UTF-8');}	// UTF8-compliant version of urldecode
+			if ($unicode) {$searchWord = html_entity_decode (preg_replace ("/%u([0-9a-f]{3,4})/i", "&#x\\1;", urldecode ($searchWord)), NULL, 'UTF-8');}	// UTF8-compliant version of urldecode
 			$searchWords[$index] = preg_quote (trim ($searchWord), '/');
 		}
 		
