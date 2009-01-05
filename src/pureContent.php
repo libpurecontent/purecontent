@@ -41,7 +41,7 @@ class pureContent {
 		# Assign the current server protocol type and version
 		if (!isSet ($_SERVER['SERVER_PROTOCOL'])) {$_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';}	// Emulation for CGI-CLI mode
 		list ($protocolType, $_SERVER['_SERVER_PROTOCOL_VERSION']) = explode ('/', $_SERVER['SERVER_PROTOCOL']);
-		$_SERVER['_SERVER_PROTOCOL_TYPE'] = strtolower ($protocolType);
+		$_SERVER['_SERVER_PROTOCOL_TYPE'] = ((isSet ($_SERVER['HTTPS']) && (strtolower ($_SERVER['HTTPS']) == 'on')) ? 'https' : 'http');
 		
 		# Assign the site URL
 		$_SERVER['_SITE_URL'] = $_SERVER['_SERVER_PROTOCOL_TYPE'] . '://' . $_SERVER['SERVER_NAME'];
