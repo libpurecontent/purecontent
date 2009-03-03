@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-8
- * Version 1.4.2
+ * Version 1.4.4
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -47,7 +47,8 @@ class pureContent {
 		$_SERVER['_SITE_URL'] = $_SERVER['_SERVER_PROTOCOL_TYPE'] . '://' . $_SERVER['SERVER_NAME'];
 		
 		# Assign the complete page URL (i.e. the full page address requested), with index.html removed if it exists, starting from root
-		$_SERVER['_PAGE_URL'] = $_SERVER['_SITE_URL'] . $_SERVER['REQUEST_URI'];
+		if (!isSet ($_SERVER['SERVER_PORT'])) {$_SERVER['SERVER_PORT'] = 80;}	// Emulation for CGI/CLI mode
+		$_SERVER['_PAGE_URL'] = $_SERVER['_SITE_URL'] . ($_SERVER['SERVER_PORT'] != 80 ? ':' . $_SERVER['SERVER_PORT'] : '') . $_SERVER['REQUEST_URI'];
 		
 		#!# Needs further work
 		// $_SERVER['SCRIPT_URL'];
