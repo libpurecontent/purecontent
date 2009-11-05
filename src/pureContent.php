@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-8
- * Version 1.4.4
+ * Version 1.5.0
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -29,12 +29,12 @@ class pureContent {
 		if (!isSet ($_SERVER['SERVER_NAME'])) {$_SERVER['SERVER_NAME'] = 'localhost';}	// Emulation for CGI/CLI mode
 		
 		# Assign the page location (i.e. the actual script opened), with index.html removed if it exists, starting from root
-		$_SERVER['PHP_SELF'] = ereg_replace ("/$directoryIndex\$", '/', $_SERVER['PHP_SELF']);
-		$_SERVER['SCRIPT_NAME'] = ereg_replace ("/$directoryIndex\$", '/', $_SERVER['SCRIPT_NAME']);
+		$_SERVER['PHP_SELF'] = preg_replace ('~' . '/' . preg_quote ($directoryIndex) . '$' . '~', '/', $_SERVER['PHP_SELF']);
+		$_SERVER['SCRIPT_NAME'] = preg_replace ('~' . '/' . preg_quote ($directoryIndex) . '$' . '~', '/', $_SERVER['SCRIPT_NAME']);
 		
 		# Assign the page location (i.e. the page address requested) with query, removing double-slashes and the directory index
-		if (!isSet ($_SERVER['REQUEST_URI'])) {$_SERVER['REQUEST_URI'] = ereg_replace ('^' . $_SERVER['DOCUMENT_ROOT'], '', $_SERVER['SCRIPT_FILENAME']);}	// Emulation for CGI/CLI mode
-		$currentPath = ereg_replace ("/$directoryIndex\$", '/', $_SERVER['REQUEST_URI']);
+		if (!isSet ($_SERVER['REQUEST_URI'])) {$_SERVER['REQUEST_URI'] = preg_replace ('/^' . preg_quote ($_SERVER['DOCUMENT_ROOT'], '/') . '/', '', $_SERVER['SCRIPT_FILENAME']);}	// Emulation for CGI/CLI mode
+		$currentPath = preg_replace ('~' . '/' . preg_quote ($directoryIndex) . '$' . '~', '/', $_SERVER['REQUEST_URI']);
 		while (strpos ($currentPath, '//') !== false) {$currentPath = str_replace ('//', '/', $currentPath);}
 		$_SERVER['REQUEST_URI'] = $currentPath;
 		
@@ -90,7 +90,7 @@ class pureContent {
 		if (substr ($tildeRoot, -1) != '/') {$tildeRoot .= '/';}
 		
 		# Clean up the current page location
-		$currentPath = ereg_replace ("^$homeLocation", '', $_SERVER['REQUEST_URI']);
+		$currentPath = preg_replace ('/' . '^' . preg_quote ($homeLocation, '/') . '/', '', $_SERVER['REQUEST_URI']);
 		$currentPath = str_replace ('../', '', $currentPath);
 		while (strpos ($currentPath, '//') !== false) {$currentPath = str_replace ('//', '/', $currentPath);}
 		
@@ -269,7 +269,7 @@ class pureContent {
 	function editLink ($internalHostRegexp, $port = 8080, $class = 'editlink')
 	{
 		# If the host matches and the port is not the edit port, give a link
-		if (ereg ($internalHostRegexp, gethostbyaddr ($_SERVER['REMOTE_ADDR'])) && ($_SERVER['SERVER_PORT'] != $port)) {
+		if (preg_match ('/' . addcslashes ($internalHostRegexp, '/') . '/', gethostbyaddr ($_SERVER['REMOTE_ADDR'])) && ($_SERVER['SERVER_PORT'] != $port)) {
 			return "<p class=\"{$class}\"><a href=\"http://{$_SERVER['SERVER_NAME']}:{$port}{$_SERVER['REQUEST_URI']}\">[Edit&nbsp;this&nbsp;page]</a></p>";
 		}
 		
@@ -457,7 +457,7 @@ class pureContent {
 	{
 		# If posted, jump, adding the current site's URL if the target doesn't start with http(s);//
 		if (isSet ($_POST[$name])) {
-			$location = (eregi ('http://|https://', $_POST[$name]) ? '' : $_SERVER['_SITE_URL']) . $_POST[$name];
+			$location = (preg_match ('~(http|https)://~i', $_POST[$name]) ? '' : $_SERVER['_SITE_URL']) . $_POST[$name];
 			require_once ('application.php');
 			application::sendHeader (302, $location);
 			return true;
@@ -501,7 +501,7 @@ class pureContent {
 		# Obtain the languages set in the environment, which will be used to mark the current language visually and set a global
 		$cookieLanguage = (isSet ($_COOKIE[$cookieName]) ? $_COOKIE[$cookieName] : NULL);
 		if ($cookieLanguage) {$cookieLanguage = (isSet ($languages[$cookieLanguage]) ? $cookieLanguage : NULL);}
-		$browserLanguage = (isSet ($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? ereg_replace ('^([a-z]+)(,|-)(.+)$', '\1', $_SERVER['HTTP_ACCEPT_LANGUAGE']) : NULL);
+		$browserLanguage = (isSet ($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? preg_replace ('^~([a-z]+)(,|-)(.+)$~', '$1', $_SERVER['HTTP_ACCEPT_LANGUAGE']) : NULL);
 		if ($browserLanguage) {$browserLanguage = (isSet ($languages[$browserLanguage]) ? $browserLanguage : NULL);}
 		$serverPreferLanguage = (isSet ($_SERVER['prefer-language']) ? $_SERVER['prefer-language'] : NULL);
 		if ($serverPreferLanguage) {$serverPreferLanguage = (isSet ($languages[$serverPreferLanguage]) ? $serverPreferLanguage : NULL);}
@@ -546,6 +546,7 @@ class pureContent {
 				$contents = file_get_contents ($filename);
 				if (strpos ($contents, $_SERVER['HTTP_REFERER']) === false) {
 					file_put_contents ($filename, 'Uncontacted' . "\t" . $newUrl . "\t" . $_SERVER['HTTP_REFERER'] . "\n", FILE_APPEND);
+					# NB This does not use application::utf8Mail to avoid creating a dependency
 					mail ($email, "Out-of-date link to be corrected for {$_SERVER['SERVER_NAME']}", "Referrer:\n{$_SERVER['HTTP_REFERER']}\n\nShould now link to:\n{$newUrl}", "From: {$email}");
 				}
 			}
@@ -642,10 +643,11 @@ class highlightSearchTerms
 			
 			# Loop through each of the search engines to determine if the previous page is from one of them
 			$matched = false;
-			while (list ($searchEngine['nameCore'], $searchEngine['queryVariable']) = each ($searchEngines)) {
+			foreach ($searchEngines as $vendor => $queryVariable) {
 				
-				# Run a match against the search engine's name with a dot either side, e.g. .google.[com]; NB this could be subverted by e.g. www.google.foobar.com
-				if (strpos ($referer['host'], ('.' . $searchEngine['nameCore'] . '.')) !== false) {
+				# Run a match against the search engine's name with a dot either side, e.g. .google.[com]
+				#!# NB this could be subverted by e.g. www.google.foobar.com
+				if (strpos ($referer['host'], ('.' . $vendor . '.')) !== false) {
 					
 					# Flag the match then break so that the selected search engine is held in the array $searchEngine
 					$matched = true;
@@ -664,7 +666,7 @@ class highlightSearchTerms
 				foreach ($queryTerms as $queryTerm) {
 					
 					# Do a match against the relevant query term e.g. q= at the start
-					if (eregi (('^' . $searchEngine['queryVariable'] . '='), $queryTerm)) {
+					if (preg_match ('/^' . $queryVariable . '=' . '/i', $queryTerm)) {
 						
 						# Flag the match then break so that the search query term is held in the variable $queryTerm
 						$queryTermMatched = true;
