@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-8
- * Version 1.5.0
+ * Version 1.5.1
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -34,9 +34,11 @@ class pureContent {
 		
 		# Assign the page location (i.e. the page address requested) with query, removing double-slashes and the directory index
 		if (!isSet ($_SERVER['REQUEST_URI'])) {$_SERVER['REQUEST_URI'] = preg_replace ('/^' . preg_quote ($_SERVER['DOCUMENT_ROOT'], '/') . '/', '', $_SERVER['SCRIPT_FILENAME']);}	// Emulation for CGI/CLI mode
-		$currentPath = preg_replace ('~' . '/' . preg_quote ($directoryIndex) . '$' . '~', '/', $_SERVER['REQUEST_URI']);
+		$parts = explode ('?', $_SERVER['REQUEST_URI'], 2);	// Break off the query string so that we can make double-slash replacements safely, before reassembling
+		$currentPath = preg_replace ('~' . '/' . preg_quote ($directoryIndex) . '$' . '~', '/', $parts[0]);
 		while (strpos ($currentPath, '//') !== false) {$currentPath = str_replace ('//', '/', $currentPath);}
 		$_SERVER['REQUEST_URI'] = $currentPath;
+		if (isSet ($parts[1])) {$_SERVER['REQUEST_URI'] .= '?' . $parts[1];}	// Reinstate the query string
 		
 		# Assign the current server protocol type and version
 		if (!isSet ($_SERVER['SERVER_PROTOCOL'])) {$_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';}	// Emulation for CGI-CLI mode
