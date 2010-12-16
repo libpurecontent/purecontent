@@ -1,8 +1,8 @@
 <?php
 
 /*
- * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-8
- * Version 1.5.2
+ * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-10
+ * Version 1.5.3
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -767,7 +767,7 @@ class highlightSearchTerms
 		# Globally replace each phrase with each replacements back into the overall HTML; for text-only (i.e. non-HTML) matching, add word-boundaries to prevent 'a' etc being picked up in <span> etc.
 		if ($sourceAsTextOnly) {
 			foreach ($phrases[0] as $index => $phrase) {
-				$phrases[0][$index] = '/\b' . preg_quote ($phrase, '/') . '\b/i' . ($unicode ? 'u' : '');
+				$phrases[0][$index] = '/\b' . preg_quote ($phrase, '/') . '\b/' . ($unicode ? 'u' : '');
 			}
 			$html = preg_replace ($phrases[0], $replacements, $html);
 		} else {
