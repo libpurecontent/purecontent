@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-10
- * Version 1.5.4
+ * Version 1.5.5
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -273,7 +273,7 @@ class pureContent {
 		# If the host matches and the port is not the edit port, give a link
 		if (preg_match ('/' . addcslashes ($internalHostRegexp, '/') . '/', gethostbyaddr ($_SERVER['REMOTE_ADDR']))) {
 			if ($_SERVER['SERVER_PORT'] != $port) {
-				return "<p class=\"{$class}\"><a href=\"http://{$_SERVER['SERVER_NAME']}:{$port}{$_SERVER['REQUEST_URI']}\">[Edit&nbsp;this&nbsp;page]</a></p>";
+				return "<p class=\"{$class}\"><a href=\"http://{$_SERVER['SERVER_NAME']}:{$port}{$_SERVER['REQUEST_URI']}\">[Editing&nbsp;mode]</a></p>";
 			} else {
 				return "<p class=\"{$class}\"><a href=\"http://{$_SERVER['SERVER_NAME']}{$_SERVER['REQUEST_URI']}\">[Return to live]</a></p>";
 			}
@@ -471,6 +471,20 @@ class pureContent {
 		
 		# Otherwise return an empty status
 		return NULL;
+	}
+	
+	
+	# Function to add social networking links
+	function socialNetworkingLinks ($twitterName = false)
+	{
+		# Build the HTML
+		$html  = "\n<p id=\"socialnetworkinglinks\">";
+		$html .= "\n\t" . '<a class="twitter" href="http://twitter.com/home?status=Loving+' . rawurlencode ($_SERVER['_PAGE_URL']) . ($twitterName ? rawurlencode ("+from+{$twitterName}%21") : '') . '" title="Follow us on Twitter"><img src="/images/general/twitter.png" alt="Icon" title="Twitter" width="55" height="20" /></a>';
+		$html .= "\n\t" . '<iframe src="http://www.facebook.com/plugins/like.php?href=' . rawurlencode ($_SERVER['_PAGE_URL']) . '&amp;send=false&amp;layout=button_count&amp;width=100&amp;show_faces=true&amp;action=like&amp;colorscheme=light&amp;font&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:100px; height:21px;" allowTransparency="true"></iframe>';
+		$html .= "\n</p>";
+		
+		# Return the HTML
+		return $html;
 	}
 	
 	
