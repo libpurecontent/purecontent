@@ -1,8 +1,8 @@
-<?php
+﻿<?php
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-10
- * Version 1.5.5
+ * Version 1.6.0
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -166,8 +166,11 @@ class pureContent {
 	
 	
 	# Define a function to generate the menu
-	function generateMenu ($menu, $cssSelected = 'selected', $parentTabLevel = 2, $orphanedDirectories = array (), $menufile = '', $id = NULL)
+	function generateMenu ($menu, $cssSelected = 'selected', $parentTabLevel = 2, $orphanedDirectories = array (), $menufile = '', $id = NULL, $class = NULL, $returnNotEcho = false)
 	{
+		# Start the HTML
+		$html  = '';
+		
 		# Ensure the orphanedDirectories supplied is an array
 		if (!is_array ($orphanedDirectories)) {$orphanedDirectories = array ();}
 		
@@ -192,7 +195,8 @@ class pureContent {
 		$tabs = str_repeat ("\t", ($parentTabLevel));
 		
 		# Create the HTML
-		echo "\n$tabs<ul" . ($id ? " id=\"{$id}\"" : '') . '>';
+		$ulStart = "\n$tabs<ul" . ($id ? " id=\"{$id}\"" : '') . ($class ? " class=\"{$class}\"" : '') . '>';
+		if ($returnNotEcho) {$html .= $ulStart;} else {echo $ulStart;}	// Has to be done this way due to the include() below
 		$spaced = false;
 		foreach ($menu as $location => $description) {
 			
@@ -204,7 +208,8 @@ class pureContent {
 			
 			# Show the link
 			$class = str_replace (array ('/', ':', '.'), array ('', '-', '-'), $location);
-			echo "\n$tabs\t" . '<li class="' . $class . ($match == $location ? " $cssSelected" : '') . (($spaced) ? ' spaced' : '') . "\"><a class=\"{$class}\" href=\"$location\">$description</a>";
+			$liStart = "\n$tabs\t" . '<li class="' . $class . ($match == $location ? " $cssSelected" : '') . (($spaced) ? ' spaced' : '') . "\"><a class=\"{$class}\" href=\"$location\">$description</a>";
+			if ($returnNotEcho) {$html .= $liStart;} else {echo $liStart;}
 			
 			# Reset the spacer flag
 			$spaced = false;
@@ -221,9 +226,60 @@ class pureContent {
 			}
 			
 			# End the menu item
-			echo '</li>';
+			$liEnd = '</li>';
+			if ($returnNotEcho) {$html .= $liEnd;} else {echo $liEnd;}
 		}
-		echo "\n$tabs</ul>";
+		$ulEnd = "\n$tabs</ul>";
+		if ($returnNotEcho) {$html .= $ulEnd;} else {echo $ulEnd;}
+		
+		# Return the HTML if required
+		if ($returnNotEcho) {
+			return $html;
+		}
+	}
+	
+	
+	# Function to process an HTML (not PHP) submenu to add an 'active' class
+	function processHtmlSubmenu ($menufile, $cssSelected = 'selected', $parentTabLevel = 2, $orphanedDirectories = array ())
+	{
+		# Read the contents of the file
+		$html = file_get_contents ($menufile);
+		
+		# Parse the contents
+		if (preg_match ('@^(.*)(<ul[^>]+>)(.+)(</ul>)(.*)$@s', $html, $matches)) {
+			
+			# Get the individual list items
+			if (preg_match_all ('@<li><a href="([^"]+)">(.+)</a></li>@sU', $matches[3], $listItems, PREG_SET_ORDER)) {
+				
+				# Re-construct into a fresh list
+				$menu = array ();
+				foreach ($listItems as $listItem) {
+					$url = $listItem[1];
+					$menu[$url] = $listItem[2];
+				}
+				
+				# Get the ID and class, if any, from the original <ul> tag
+				$id = NULL;
+				if (preg_match ('/id="([^"]+)"/', $matches[2], $idMatches)) {
+					$id = $idMatches[1];
+				}
+				$class = NULL;
+				if (preg_match ('/class="([^"]+)"/', $matches[2], $classMatches)) {
+					$class = $classMatches[1];
+				}
+				
+				# Generate the menu
+				$menu = self::generateMenu ($menu, $cssSelected, $parentTabLevel, $orphanedDirectories, '', $id, $class, $return = true);
+				
+				# Reconstruct the HTML
+				$html  = $matches[1];	// Any HTML before <ul>
+				$html .= $menu;
+				$html .= $matches[5];	// Any HTML after <ul>
+			}
+		}
+		
+		# Return the HTML
+		return $html;
 	}
 	
 	
