@@ -1,8 +1,8 @@
-﻿<?php
+<?php
 
 /*
- * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-10
- * Version 1.6.1
+ * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-12
+ * Version 1.6.2
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -819,8 +819,12 @@ class highlightSearchTerms
 		$searchWords = implode ('|', $searchWords);
 		$phraseRegexp = $regexpStart . $searchWords . $regexpEnd;
 		
+		# Exclude <script> sections from the HTML to look against
+		$testAgainstHtml = $html;
+		$testAgainstHtml = preg_replace ('|<script (.+)</script>|is' . ($unicode ? 'u' : ''), '', $testAgainstHtml);
+		
 		# Perform a regexp match to extract the matched phrases or end at this point if none found
-		if (!preg_match_all (('/' . $phraseRegexp . '/i' . ($unicode ? 'u' : '')), $html, $phrases, PREG_PATTERN_ORDER)) {
+		if (!preg_match_all (('/' . $phraseRegexp . '/i' . ($unicode ? 'u' : '')), $testAgainstHtml, $phrases, PREG_PATTERN_ORDER)) {
 			return $html;
 		}
 		
