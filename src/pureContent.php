@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-12
- * Version 1.6.2
+ * Version 1.6.3
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -537,7 +537,7 @@ class pureContent {
 		$html  = "\n<p id=\"socialnetworkinglinks\">";
 		if ($prefixText) {$html .= $prefixText;}
 		$html .= "\n\t" . '<a class="twitter" href="http://twitter.com/home?status=Loving+' . rawurlencode ($_SERVER['_PAGE_URL']) . ($twitterName ? rawurlencode (" from @{$twitterName}!") : '') . '" title="Follow us on Twitter"><img src="/images/general/twitter.png" alt="Icon" title="Twitter" width="55" height="20" /></a>';
-		$html .= "\n\t" . '<iframe src="http://www.facebook.com/plugins/like.php?href=' . rawurlencode ($_SERVER['_PAGE_URL']) . '&amp;send=false&amp;layout=button_count&amp;show_faces=true&amp;action=like&amp;colorscheme=light&amp;font&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; height:20px;" allowTransparency="true"></iframe>';
+		$html .= "\n\t" . '<iframe src="http://www.facebook.com/plugins/like.php?href=' . rawurlencode ($_SERVER['_PAGE_URL']) . '&amp;send=false&amp;layout=button_count&amp;show_faces=true&amp;action=like&amp;colorscheme=light&amp;font&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; height:20px;"></iframe>';
 		$html .= "\n</p>";
 		
 		# Return the HTML
@@ -754,6 +754,9 @@ class highlightSearchTerms
 				# If there is a match, obtain the query phrase from the query term (i.e. the words after the =
 				if ($queryTermMatched) {
 					list ($discarded, $queryPhrase) = explode ('=', $queryTerm);
+					
+					# End if there is no query phrase, e.g. ?..q=&foo=bar
+					if (!strlen ($queryPhrase)) {return false;}
 					
 					# Strip " (which is encoded as %22) from the query
 					$queryPhrase = trim (str_replace ('%22', '', $queryPhrase));
