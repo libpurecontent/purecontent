@@ -1,8 +1,8 @@
-<?php
+﻿<?php
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-12
- * Version 1.6.3
+ * Version 1.6.4
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -380,13 +380,20 @@ class pureContent {
 	
 	
 	# Function to create tabs and assign the current tab
-	function tabs ($pages, $selectedClass = 'selected', $class = 'tabs', $indent = 0)
+	function tabs ($pages, $selectedClass = 'selected', $class = 'tabs', $indent = 0, $orphaned = array ())
 	{
 		# Create the tabs
 		$tabs = array ();
 		foreach ($pages as $page => $label) {
-			$selected = ($page == $_SERVER['REQUEST_URI'] ? " class=\"{$selectedClass}\"" : '');
-			$tabs[] = "<li{$selected}><a href=\"{$page}\">{$label}</a></li>";
+			$isSelected = false;
+			if ($page == $_SERVER['REQUEST_URI']) {
+				$isSelected = true;
+			}
+			if ($orphaned && isSet ($orphaned[$_SERVER['REQUEST_URI']]) && ($orphaned[$_SERVER['REQUEST_URI']] == $page)) {
+				$isSelected = true;
+			}
+			$selectedHtml = ($isSelected ? " class=\"{$selectedClass}\"" : '');
+			$tabs[] = "<li{$selectedHtml}><a href=\"{$page}\">{$label}</a></li>";
 		}
 		
 		# Compile the HTML
