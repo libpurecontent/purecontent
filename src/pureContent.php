@@ -1,8 +1,8 @@
-﻿<?php
+<?php
 
 /*
- * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-12
- * Version 1.6.4
+ * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-13
+ * Version 1.6.5
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -284,7 +284,7 @@ class pureContent {
 	
 	
 	# Function to create an id and class for the body tag, useful for CSS selectors
-	function bodyAttributes ($addSiteUrl = true)
+	function bodyAttributes ($addSiteUrl = true, $additionalClass = false)
 	{
 		# The REQUEST_URI will have been cleaned by pureContent::cleanServerGlobals already to implode // into /
 		// No action
@@ -293,7 +293,11 @@ class pureContent {
 		$bodyAttributes  = ($addSiteUrl ? ' id="' . htmlspecialchars (pureContent::bodyAttributesId ()) . '"' : '');
 		
 		# Add the class
-		$bodyAttributes .= ' class="' . htmlspecialchars (pureContent::bodyAttributesClass ()) . '"';
+		$class  = pureContent::bodyAttributesClass ();
+		if ($additionalClass) {
+			$class .= ($class ? ' ' : '') . $additionalClass;
+		}
+		$bodyAttributes .= ' class="' . htmlspecialchars ($class) . '"';
 		
 		# Return the compiled string
 		return $bodyAttributes;
