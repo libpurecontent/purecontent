@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-13
- * Version 1.6.5
+ * Version 1.7.0
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -17,7 +17,7 @@ pureContent::cleanServerGlobals ();
 class pureContent {
 	
 	# Function to clean and standardise server-generated globals
-	function cleanServerGlobals ($directoryIndex = 'index.html')
+	public static function cleanServerGlobals ($directoryIndex = 'index.html')
 	{
 		# Assign the server root path, non-slash terminated
 		$_SERVER['DOCUMENT_ROOT'] = ((substr ($_SERVER['DOCUMENT_ROOT'], -1) == '/') ? substr ($_SERVER['DOCUMENT_ROOT'], 0, -1) : $_SERVER['DOCUMENT_ROOT']);
@@ -52,8 +52,10 @@ class pureContent {
 		if (!isSet ($_SERVER['SERVER_PORT'])) {$_SERVER['SERVER_PORT'] = 80;}	// Emulation for CGI/CLI mode
 		$_SERVER['_PAGE_URL'] = $_SERVER['_SITE_URL'] . ($_SERVER['SERVER_PORT'] != 80 ? ':' . $_SERVER['SERVER_PORT'] : '') . $_SERVER['REQUEST_URI'];
 		
-		#!# Needs further work
-		// $_SERVER['SCRIPT_URL'];
+		# Ensure SCRIPT_URL is present
+		if (!isSet ($_SERVER['SCRIPT_URL'])) {
+			$_SERVER['SCRIPT_URL'] = $parts[0];
+		}
 		
 		# Assign the query string (for the few cases, e.g. a 404, where a REDIRECT_QUERY_STRING is generated instead
 		$_SERVER['QUERY_STRING'] = (isSet ($_SERVER['REDIRECT_QUERY_STRING']) ? $_SERVER['REDIRECT_QUERY_STRING'] : (isSet ($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : ''));
@@ -85,7 +87,7 @@ class pureContent {
 	 * @param string $sectionTitleFile			// The filename for the section information placed in each directory
 	 * @param string $menuTitleFile				// The filename for the submenu placed in each top-level directory
 	 */
-	function assignNavigation ($dividingTextOnPage = ' &#187; ', $dividingTextInBrowserLine = ' &#187; ', $introductoryText = 'You are in:  ', $homeText = 'Home', $enforceStrictBehaviour = false, $browserlineFullHierarchy = false, $homeLocation = '/', $sectionTitleFile = '.title.txt', $menuTitleFile = '.menu.html', $tildeRoot = '/home/', $behaviouralHackFile = '/sitetech/assignNavigationHack.html', $linkToCurrent = false)
+	public static function assignNavigation ($dividingTextOnPage = ' &#187; ', $dividingTextInBrowserLine = ' &#187; ', $introductoryText = 'You are in:  ', $homeText = 'Home', $enforceStrictBehaviour = false, $browserlineFullHierarchy = false, $homeLocation = '/', $sectionTitleFile = '.title.txt', $menuTitleFile = '.menu.html', $tildeRoot = '/home/', $behaviouralHackFile = '/sitetech/assignNavigationHack.html', $linkToCurrent = false)
 	{
 		# Ensure the home location and tilde root ends with a trailing slash
 		if (substr ($homeLocation, -1) != '/') {$homeLocation .= '/';}
@@ -166,7 +168,7 @@ class pureContent {
 	
 	
 	# Define a function to generate the menu
-	function generateMenu ($menu, $cssSelected = 'selected', $parentTabLevel = 2, $orphanedDirectories = array (), $menufile = '', $id = NULL, $class = NULL, $returnNotEcho = false)
+	public static function generateMenu ($menu, $cssSelected = 'selected', $parentTabLevel = 2, $orphanedDirectories = array (), $menufile = '', $id = NULL, $class = NULL, $returnNotEcho = false)
 	{
 		# Start the HTML
 		$html  = '';
@@ -240,7 +242,7 @@ class pureContent {
 	
 	
 	# Function to process an HTML (not PHP) submenu to add an 'active' class
-	function processHtmlSubmenu ($menufile, $cssSelected = 'selected', $parentTabLevel = 2, $orphanedDirectories = array ())
+	public static function processHtmlSubmenu ($menufile, $cssSelected = 'selected', $parentTabLevel = 2, $orphanedDirectories = array ())
 	{
 		# Read the contents of the file
 		$html = file_get_contents ($menufile);
@@ -284,16 +286,16 @@ class pureContent {
 	
 	
 	# Function to create an id and class for the body tag, useful for CSS selectors
-	function bodyAttributes ($addSiteUrl = true, $additionalClass = false)
+	public static function bodyAttributes ($addSiteUrl = true, $additionalClass = false)
 	{
 		# The REQUEST_URI will have been cleaned by pureContent::cleanServerGlobals already to implode // into /
 		// No action
 		
 		# Start with the site URL if wanted
-		$bodyAttributes  = ($addSiteUrl ? ' id="' . htmlspecialchars (pureContent::bodyAttributesId ()) . '"' : '');
+		$bodyAttributes  = ($addSiteUrl ? ' id="' . htmlspecialchars (self::bodyAttributesId ()) . '"' : '');
 		
 		# Add the class
-		$class  = pureContent::bodyAttributesClass ();
+		$class  = self::bodyAttributesClass ();
 		if ($additionalClass) {
 			$class .= ($class ? ' ' : '') . $additionalClass;
 		}
@@ -305,20 +307,20 @@ class pureContent {
 	
 	
 	# Function to obtain id for bodyAttributes
-	function bodyAttributesId ()
+	public static function bodyAttributesId ()
 	{
 		return str_replace ('.', '-', $_SERVER['SERVER_NAME']);
 	}
 	
 	
 	# Function to obtain class for bodyAttributes
-	function bodyAttributesClass ()
+	public static function bodyAttributesClass ()
 	{
 		# Return 'home' if no subdirectory
-		if (substr_count ($_SERVER['REQUEST_URI'], '/') < 2) {return 'homepage';}
+		if (substr_count ($_SERVER['SCRIPT_URL'], '/') < 2) {return 'homepage';}
 		
 		# Split the URL into pieces, and remove the blank start and the .html (or empty) end
-		$urlParts = explode ('/', $_SERVER['REQUEST_URI']);
+		$urlParts = explode ('/', $_SERVER['SCRIPT_URL']);	// which will not have the query string
 		array_pop ($urlParts);
 		array_shift ($urlParts);
 		
@@ -328,14 +330,14 @@ class pureContent {
 	
 	
 	# Function to provide an edit link if using pureContentEditor
-	function editLink ($internalHostRegexp, $port = 8080, $class = 'editlink')
+	public static function editLink ($internalHostRegexp, $port = 8080, $class = 'editlink')
 	{
 		# If the host matches and the port is not the edit port, give a link
 		if (preg_match ('/' . addcslashes ($internalHostRegexp, '/') . '/', gethostbyaddr ($_SERVER['REMOTE_ADDR']))) {
 			if ($_SERVER['SERVER_PORT'] != $port) {
-				return "<p class=\"{$class}\"><a href=\"http://{$_SERVER['SERVER_NAME']}:{$port}{$_SERVER['REQUEST_URI']}\">[Editing&nbsp;mode]</a></p>";
+				return "<p class=\"{$class}\"><a href=\"http://{$_SERVER['SERVER_NAME']}:{$port}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . "\">[Editing&nbsp;mode]</a></p>";
 			} else {
-				return "<p class=\"{$class}\"><a href=\"http://{$_SERVER['SERVER_NAME']}{$_SERVER['REQUEST_URI']}\">[Return to live]</a></p>";
+				return "<p class=\"{$class}\"><a href=\"http://{$_SERVER['SERVER_NAME']}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . "\">[Return to live]</a></p>";
 			}
 		}
 		
@@ -345,7 +347,7 @@ class pureContent {
 	
 	
 	# Function to combine a set of files having a submenu into a single page
-	function autocombine ($menufile = './menu.html', $div = 'autocombined')
+	public static function autocombine ($menufile = './menu.html', $div = 'autocombined')
 	{
 		# Get the links
 		$menu = file_get_contents ($menufile);
@@ -384,7 +386,7 @@ class pureContent {
 	
 	
 	# Function to create tabs and assign the current tab
-	function tabs ($pages, $selectedClass = 'selected', $class = 'tabs', $indent = 0, $orphaned = array ())
+	public static function tabs ($pages, $selectedClass = 'selected', $class = 'tabs', $indent = 0, $orphaned = array ())
 	{
 		# Create the tabs
 		$tabs = array ();
@@ -409,7 +411,7 @@ class pureContent {
 	
 	
 	# Function to switch stylesheet style via a cookie
-	function switchStyle ($stylesheets, $directory)
+	public static function switchStyle ($stylesheets, $directory)
 	{
 		# Allow the style to be set via a URL
 		if (isSet ($_GET['style'])) {
@@ -464,7 +466,7 @@ class pureContent {
 	
 	
 	# Wrapper function to provide search term highlighting
-	function highlightSearchTerms ()
+	public static function highlightSearchTerms ()
 	{
 		# Echo the result
 		return highlightSearchTerms::main ();
@@ -472,7 +474,7 @@ class pureContent {
 	
 	
 	# Function to create a basic threading system to enable easy previous/index/next links
-	function thread ($pages)
+	public static function thread ($pages)
 	{
 		# Loop through the list of pages numerically to find a match
 		$totalPages = count ($pages);
@@ -497,7 +499,7 @@ class pureContent {
 	
 	
 	# Function to create a jumplist form
-	function htmlJumplist ($values, $selected = '', $action = '', $name = 'jumplist', $parentTabLevel = 0, $class = 'jumplist', $introductoryText = 'Go to:', $valueSubstitution = false, $onchangeJavascript = true)
+	public static function htmlJumplist ($values /* will have htmlspecialchars applied to both keys and values */, $selected = '', $action = '', $name = 'jumplist', $parentTabLevel = 0, $class = 'jumplist', $introductoryText = 'Go to:', $valueSubstitution = false, $onchangeJavascript = true)
 	{
 		# Return an empty string if no items
 		if (empty ($values)) {return '';}
@@ -505,14 +507,15 @@ class pureContent {
 		# Prepare the tab string
 		$tabs = str_repeat ("\t", ($parentTabLevel));
 		
-		# Build the list
+		# Build the list; note that the visible value can never have tags within (e.g. <span>): http://stackoverflow.com/questions/5678760
 		foreach ($values as $value => $visible) {
-			$fragments[] = '<option value="' . ($valueSubstitution ? str_replace ('%value', $value, $valueSubstitution) : $value) . '"' . ($value == $selected ? ' selected="selected"' : '') . ">$visible</option>";
+			$fragments[] = '<option value="' . ($valueSubstitution ? str_replace ('%value', htmlspecialchars ($value), $valueSubstitution) : htmlspecialchars ($value)) . '"' . ($value == $selected ? ' selected="selected"' : '') . '>' . htmlspecialchars ($visible) . '</option>';
 		}
 		
 		# Construct the HTML
-		$html  = "\n\n$tabs" . "<div class=\"$class\">$introductoryText";
-		$html .= "\n$tabs\t" . "<form method=\"post\" action=\"$action\" name=\"$name\">";
+		$html  = "\n\n$tabs" . "<div class=\"$class\">";
+		$html .= "\n\n$tabs" . $introductoryText;
+		$html .= "\n$tabs\t" . "<form method=\"post\" action=\"" . htmlspecialchars ($action) . "\" name=\"$name\">";
 		$html .= "\n$tabs\t\t" . "<select name=\"$name\"" . ($onchangeJavascript ? ' onchange="window.location.href/*stopBots*/=this[selectedIndex].value"' : '') . '>';	// The inline 'stopBots' javascript comment is an attempt to stop rogue bots picking up the "href=" text
 		$html .= "\n$tabs\t\t\t" . implode ("\n$tabs\t\t\t", $fragments);
 		$html .= "\n$tabs\t\t" . '</select>';
@@ -526,7 +529,7 @@ class pureContent {
 	
 	
 	# Function to process the jumplist
-	function jumplistProcessor ($name = 'jumplist')
+	public static function jumplistProcessor ($name = 'jumplist')
 	{
 		# If posted, jump, adding the current site's URL if the target doesn't start with http(s);//
 		if (isSet ($_POST[$name])) {
@@ -542,7 +545,7 @@ class pureContent {
 	
 	
 	# Function to add social networking links
-	function socialNetworkingLinks ($twitterName = false, $prefixText = false)
+	public static function socialNetworkingLinks ($twitterName = false, $prefixText = false)
 	{
 		# Build the HTML
 		$html  = "\n<p id=\"socialnetworkinglinks\">";
@@ -557,7 +560,7 @@ class pureContent {
 	
 	
 	# Function to set a cookie for content-negotiation language setting
-	function languageSelection ($languages = array ('en' => 'English', ), $postName = 'language', $imageLocation = '/images/flags/', $ulClass = 'language', $cookieName = 'language', $cookieDays = 30, $cookiePath = '/')
+	public static function languageSelection ($languages = array ('en' => 'English', ), $postName = 'language', $imageLocation = '/images/flags/', $ulClass = 'language', $cookieName = 'language', $cookieDays = 30, $cookiePath = '/')
 	{
 		/*  NB Apache would need something like:
 			<Directory /path/to/webroot/>
@@ -626,7 +629,7 @@ class pureContent {
 	RewriteCond %{HTTP_HOST}   !^www.newsite.example.com [NC]
 	RewriteRule ^/(.*) http://www.newsite.example.com/$1?newsite [L,R]
 	*/
-	function trackRedirects ($filename, $email, $queryString = 'newsite')
+	public static function trackRedirects ($filename, $email, $queryString = 'newsite')
 	{
 		if ($_SERVER['QUERY_STRING'] == $queryString) {
 			$newUrl = str_replace ('?'. $queryString, '', $_SERVER['_PAGE_URL']);
@@ -648,7 +651,7 @@ class pureContent {
 class highlightSearchTerms
 {
 	# Quasi-constructor
-	function main ()
+	public static function main ()
 	{
 		# Only run the buffer if there is an outside referer, to save processing speed
 		if (empty ($_SERVER['HTTP_REFERER'])) {return;}
@@ -666,12 +669,13 @@ class highlightSearchTerms
 	
 	
 	# List the supported search engines (which use & as the splitter and + between query words) as hostname core => query variable in URL.
-	function supportedSearchEngines ()
+	public static function supportedSearchEngines ()
 	{
 		# Return an array of search engines
 		return $searchEngines = array (
-			'google' => 'q',
+			'google' => 'q',	// Increasingly this won't work as google are using intermediate links
 			'yahoo' => 'p',
+			'bing' => 'q',
 			'altavista' => 'q',
 			'lycos' => 'query',
 			'alltheweb' => 'q',
@@ -683,7 +687,7 @@ class highlightSearchTerms
 	
 	# List the available colours for highlighting, or enter 'highlight' to use class="highlight"
 	#!# This should be set in the options instead of as a method
-	function availableColours ()
+	public static function availableColours ()
 	{
 		# Return an array of available colours
 		return $colours = array (
@@ -693,23 +697,23 @@ class highlightSearchTerms
 	
 	
 	# Outside wrapper as ob_start seems to have issues with multiple arguments
-	function outsideWrapper ($string) {
-		return highlightSearchTerms::wrapper ($string);
+	public static function outsideWrapper ($string) {
+		return self::wrapper ($string);
 	}
 	
 	
 	# Wrapper function
-	function wrapper ($string, $searchEngines = array ())
+	public static function wrapper ($string, $searchEngines = array ())
 	{
 		# Get the list of search engines and colours
-		if (!$searchEngines) {$searchEngines = highlightSearchTerms::supportedSearchEngines ();}
-		$colours = highlightSearchTerms::availableColours ();
+		if (!$searchEngines) {$searchEngines = self::supportedSearchEngines ();}
+		$colours = self::availableColours ();
 		
 		# Obtain the query words (if any) from the referring page
-		if ($queryWords = highlightSearchTerms::obtainQueryWords ($searchEngines)) {
+		if ($queryWords = self::obtainQueryWords ($searchEngines)) {
 			
 			# Modify the HTML
-			$html = highlightSearchTerms::replaceHtml ($string, $queryWords, $colours);
+			$html = self::replaceHtml ($string, $queryWords, $colours);
 			
 			# Return the HTML
 			return $html;
@@ -721,7 +725,7 @@ class highlightSearchTerms
 	
 	
 	# Obtain the query words
-	function obtainQueryWords ($searchEngines)
+	public static function obtainQueryWords ($searchEngines)
 	{
 		# Parse the URL so that the hostname can be obtained
 		$referer = parse_url ($_SERVER['HTTP_REFERER']);
@@ -787,7 +791,7 @@ class highlightSearchTerms
 	
 	
 	# Function to highlight search terms very loosely based on GPL'ed script by Eric Bodden - see www.bodden.de/legacy/php-scripts/
-	function replaceHtml ($html, $searchWords, $colours = 'yellow', $sourceAsTextOnly = false, $showIndication = true, $unicode = true)
+	public static function replaceHtml ($html, $searchWords, $colours = 'yellow', $sourceAsTextOnly = false, $showIndication = true, $unicode = true)
 	{
 		# Assign the colours to be used, into an array
 		if (!is_array ($colours)) {
