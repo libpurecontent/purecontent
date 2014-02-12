@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-13
- * Version 1.7.1
+ * Version 1.7.2
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -335,9 +335,9 @@ class pureContent {
 		# If the host matches and the port is not the edit port, give a link
 		if (preg_match ('/' . addcslashes ($internalHostRegexp, '/') . '/', gethostbyaddr ($_SERVER['REMOTE_ADDR']))) {
 			if ($_SERVER['SERVER_PORT'] != $port) {
-				return "<p class=\"{$class}\"><a href=\"http://{$_SERVER['SERVER_NAME']}:{$port}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . "\">[Editing&nbsp;mode]</a></p>";
+				return "<p class=\"{$class} noprint\"><a href=\"http://{$_SERVER['SERVER_NAME']}:{$port}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . "\">[Editing&nbsp;mode]</a></p>";
 			} else {
-				return "<p class=\"{$class}\"><a href=\"http://{$_SERVER['SERVER_NAME']}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . "\">[Return to live]</a></p>";
+				return "<p class=\"{$class} noprint\"><a href=\"http://{$_SERVER['SERVER_NAME']}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . "\">[Return to live]</a></p>";
 			}
 		}
 		
@@ -562,11 +562,14 @@ class pureContent {
 	# Function to add social networking links
 	public static function socialNetworkingLinks ($twitterName = false, $prefixText = false)
 	{
+		# End if server port doesn't match, as this can cause JS warnings on modern browser
+		if ($_SERVER['SERVER_PORT'] != '80') {return false;}
+		
 		# Build the HTML
 		$html  = "\n<p id=\"socialnetworkinglinks\">";
 		if ($prefixText) {$html .= $prefixText;}
-		$html .= "\n\t" . '<a class="twitter" href="http://twitter.com/home?status=Loving+' . rawurlencode ($_SERVER['_PAGE_URL']) . ($twitterName ? rawurlencode (" from @{$twitterName}!") : '') . '" title="Follow us on Twitter"><img src="/images/general/twitter.png" alt="Icon" title="Twitter" width="55" height="20" /></a>';
-		$html .= "\n\t" . '<iframe src="http://www.facebook.com/plugins/like.php?href=' . rawurlencode ($_SERVER['_PAGE_URL']) . '&amp;send=false&amp;layout=button_count&amp;show_faces=true&amp;action=like&amp;colorscheme=light&amp;font&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; height:20px;"></iframe>';
+		$html .= "\n\t" . '<a class="twitter" href="//twitter.com/home?status=Loving+' . rawurlencode ($_SERVER['_PAGE_URL']) . ($twitterName ? rawurlencode (" from @{$twitterName}!") : '') . '" title="Follow us on Twitter"><img src="/images/general/twitter.png" alt="Icon" title="Twitter" width="55" height="20" /></a>';
+		$html .= "\n\t" . '<iframe src="//www.facebook.com/plugins/like.php?href=' . rawurlencode ($_SERVER['_PAGE_URL']) . '&amp;send=false&amp;layout=button_count&amp;show_faces=true&amp;action=like&amp;colorscheme=light&amp;font&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; height:20px;"></iframe>';
 		$html .= "\n</p>";
 		
 		# Return the HTML
