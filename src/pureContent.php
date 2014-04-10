@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-13
- * Version 1.7.2
+ * Version 1.7.3
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -217,12 +217,16 @@ class pureContent {
 			$spaced = false;
 			
 			# Include the menu file
-			if ($match == $location) {
-				if (!empty ($menufile)) {
+			if (!empty ($menufile)) {
+				if ($match == $location || $menufile == '*') {
 					#!# Hacked in 060222 - deals with non-top level sections like /foo/bar/ but hard-codes .menu.html ... ; arguably this is a more sensible system though, and avoids passing menu file along a chain
-					$menufile = $_SERVER['DOCUMENT_ROOT'] . $location . '/.menu.html';
-					if (file_exists ($menufile)) {
-						include ($menufile);
+					$menufileFilename = $_SERVER['DOCUMENT_ROOT'] . $location . '/.menu.html';
+					if (file_exists ($menufileFilename)) {
+						if ($returnNotEcho) {
+							$html .= file_get_contents ($menufileFilename);
+						} else {
+							include ($menufileFilename);
+						}
 					}
 				}
 			}
