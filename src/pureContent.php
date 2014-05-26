@@ -1,8 +1,8 @@
 <?php
 
 /*
- * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-13
- * Version 1.7.3
+ * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-14
+ * Version 1.7.4
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -250,6 +250,9 @@ class pureContent {
 	{
 		# Read the contents of the file
 		$html = file_get_contents ($menufile);
+		
+		# Strip out comments first, so that commented-out items do not reappear
+		$html = preg_replace ('/<!--(.*)-->/Uis', '', $html);
 		
 		# Parse the contents
 		if (preg_match ('@^(.*)(<ul[^>]+>)(.+)(</ul>)(.*)$@s', $html, $matches)) {
