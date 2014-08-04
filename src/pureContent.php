@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-14
- * Version 1.7.4
+ * Version 1.7.5
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -168,7 +168,7 @@ class pureContent {
 	
 	
 	# Define a function to generate the menu
-	public static function generateMenu ($menu, $cssSelected = 'selected', $parentTabLevel = 2, $orphanedDirectories = array (), $menufile = '', $id = NULL, $class = NULL, $returnNotEcho = false)
+	public static function generateMenu ($menu, $cssSelected = 'selected', $parentTabLevel = 2, $orphanedDirectories = array (), $menufile = '', $id = NULL, $class = NULL, $returnNotEcho = false, $addSubmenuClass = false, $submenuDuplicateFirstLink = false)
 	{
 		# Start the HTML
 		$html  = '';
@@ -223,7 +223,14 @@ class pureContent {
 					$menufileFilename = $_SERVER['DOCUMENT_ROOT'] . $location . '/.menu.html';
 					if (file_exists ($menufileFilename)) {
 						if ($returnNotEcho) {
-							$html .= file_get_contents ($menufileFilename);
+							$menuFileHtml = file_get_contents ($menufileFilename);
+							if ($submenuDuplicateFirstLink) {
+								$menuFileHtml = str_replace ('<ul>', '<ul>' . "\n\t<li><a href=\"{$location}\">" . htmlspecialchars ($description) . (is_string ($submenuDuplicateFirstLink) ? ' ' . $submenuDuplicateFirstLink : '') . '</a></li>', $menuFileHtml);
+							}
+							if ($addSubmenuClass) {
+								$menuFileHtml = str_replace ('<ul>', "<ul class=\"{$addSubmenuClass}\">", $menuFileHtml);
+							}
+							$html .= $menuFileHtml;
 						} else {
 							include ($menufileFilename);
 						}
@@ -337,14 +344,14 @@ class pureContent {
 	
 	
 	# Function to provide an edit link if using pureContentEditor
-	public static function editLink ($internalHostRegexp, $port = 8080, $class = 'editlink')
+	public static function editLink ($internalHostRegexp, $port = 8080, $class = 'editlink', $tag = 'p')
 	{
 		# If the host matches and the port is not the edit port, give a link
 		if (preg_match ('/' . addcslashes ($internalHostRegexp, '/') . '/', gethostbyaddr ($_SERVER['REMOTE_ADDR']))) {
 			if ($_SERVER['SERVER_PORT'] != $port) {
-				return "<p class=\"{$class} noprint\"><a href=\"http://{$_SERVER['SERVER_NAME']}:{$port}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . "\">[Editing&nbsp;mode]</a></p>";
+				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"http://{$_SERVER['SERVER_NAME']}:{$port}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . "\">[Editing&nbsp;mode]</a></{$tag}>";
 			} else {
-				return "<p class=\"{$class} noprint\"><a href=\"http://{$_SERVER['SERVER_NAME']}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . "\">[Return to live]</a></p>";
+				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"http://{$_SERVER['SERVER_NAME']}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . "\">[Return to live]</a></{$tag}>";
 			}
 		}
 		
