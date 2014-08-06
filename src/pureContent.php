@@ -1,8 +1,8 @@
-<?php
+﻿<?php
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-14
- * Version 1.7.5
+ * Version 1.8.0
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -225,7 +225,7 @@ class pureContent {
 						if ($returnNotEcho) {
 							$menuFileHtml = file_get_contents ($menufileFilename);
 							if ($submenuDuplicateFirstLink) {
-								$menuFileHtml = str_replace ('<ul>', '<ul>' . "\n\t<li><a href=\"{$location}\">" . htmlspecialchars ($description) . (is_string ($submenuDuplicateFirstLink) ? ' ' . $submenuDuplicateFirstLink : '') . '</a></li>', $menuFileHtml);
+								$menuFileHtml = str_replace ('<ul>', '<ul>' . "\n\t<li><a href=\"{$location}\">" . $description . (is_string ($submenuDuplicateFirstLink) ? ' ' . $submenuDuplicateFirstLink : '') . '</a></li>', $menuFileHtml);
 							}
 							if ($addSubmenuClass) {
 								$menuFileHtml = str_replace ('<ul>', "<ul class=\"{$addSubmenuClass}\">", $menuFileHtml);
@@ -349,7 +349,7 @@ class pureContent {
 		# If the host matches and the port is not the edit port, give a link
 		if (preg_match ('/' . addcslashes ($internalHostRegexp, '/') . '/', gethostbyaddr ($_SERVER['REMOTE_ADDR']))) {
 			if ($_SERVER['SERVER_PORT'] != $port) {
-				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"http://{$_SERVER['SERVER_NAME']}:{$port}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . "\">[Editing&nbsp;mode]</a></{$tag}>";
+				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"http://{$_SERVER['SERVER_NAME']}:{$port}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . '"><img src="/images/icons/page_edit.png" class="icon" /> Editing&nbsp;mode</a>' . "</{$tag}>";
 			} else {
 				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"http://{$_SERVER['SERVER_NAME']}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . "\">[Return to live]</a></{$tag}>";
 			}
@@ -587,6 +587,59 @@ class pureContent {
 		$html .= "\n</p>";
 		
 		# Return the HTML
+		return $html;
+	}
+	
+	
+	# Social networking metadata
+	public static function socialNetworkingMetadata ($siteName, $twitterHandle = false, $imageLocation /* Starting / */, $description, $title = false, $imageWidth = false, $imageHeight = false, $pageUrl = false)
+	{
+		# Start the HTML
+		$html = '';
+		
+		# Ensure there is an imageLocation
+		if (!$imageLocation) {return false;}
+		
+		# Start an array of meta attributes
+		$attributes = array ();
+		
+		# Type
+		$attributes['og:type'] = 'website';
+		if ($twitterHandle) {
+			$attributes['twitter:card'] = 'photo';
+		}
+		
+		# Site name
+		$attributes['og:site_name'] = $siteName;
+		if ($twitterHandle) {
+			$attributes['twitter:site'] = $twitterHandle;
+		}
+		
+		# Image
+		$attributes['og:image'] = $_SERVER['_SITE_URL'] . $imageLocation;
+		if ($imageWidth) {$attributes['og:image:width'] = $width;}
+		if ($imageHeight) {$attributes['og:image:height'] = $height;}
+		
+		# Text
+		if ($title) {$attributes['og:title'] = (strlen ($title) > 80 ? substr ($title, 0, 80) . '&hellip' : $title);}
+		// $attributes['og:description'] = substr ($description, 0, 220);	// Twitter will then truncate this to 201
+		
+		# Page URL
+		$attributes['og:url'] = ($pageUrl ? $pageUrl : $_SERVER['_PAGE_URL']);
+		
+		# Compile the HTML
+		$metaEntries = array ();
+		foreach ($attributes as $key => $value) {
+			$value = htmlspecialchars ($value, ENT_NOQUOTES);
+			if (preg_match ('/^twitter:/', $key)) {
+				$metaEntries[] = '<meta name="' . $key . '" content="' . $value . '" />';
+			} else {
+				$metaEntries[] = '<meta property="' . $key . '" content="' . $value . '" />';
+			}
+		}
+		$html = "\n\t\t" . implode ("\n\t\t", $metaEntries);
+		
+		# Return the HTML, to put in the <head>
 		return $html;
 	}
 	
