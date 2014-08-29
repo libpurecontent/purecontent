@@ -1,8 +1,8 @@
-﻿<?php
+<?php
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-14
- * Version 1.8.0
+ * Version 1.9.0
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -358,6 +358,50 @@ class pureContent {
 		# Otherwise return an empty string
 		return '';
 	}
+	
+	
+	# Function to provide an SSO link area
+	public static function ssoLinks ($ssoBrandName = false, $profileUrl = false, $profileName = 'My profile')
+	{
+		# End if SSO not installed
+		if (!isSet ($_SERVER['SINGLE_SIGN_ON_ENABLED'])) {return false;}
+		
+		# Start the HTML by opening a list
+		$html  = "\n\t<ul>";
+		
+		# Determine any return-to appended reference
+		$returnTo = ($_SERVER['REQUEST_URI'] && ($_SERVER['REQUEST_URI'] != '/') ? '?' . htmlspecialchars ($_SERVER['REQUEST_URI']) : '');
+		
+		# Show the link
+		if (preg_match ('|^/logout|', $_SERVER['REQUEST_URI'])) {
+			$html .= "\n\t\t<li><span>Logging out&hellip;</span></li>";	// NB the user will actually have been logged out already
+		} else if ($_SERVER['REMOTE_USER']) {
+			$html .= "\n\t\t<li class=\"submenu\">";
+			$html .= "<span>Logged in as <strong>" . htmlspecialchars ($_SERVER['REMOTE_USER']) . "</strong> &#9660;</span>";
+			$html .= "\n\t\t<ul>";
+			if ($profileUrl) {
+				$html .= "\n\t\t\t<li><a href=\"{$profileUrl}\">{$profileName}</a></li>";
+			}
+			$html .= "\n\t\t\t<li><a href=\"/logout/{$returnTo}\">Logout</a></li>";	// Note that this will not maintain any #anchor, because the server doesn't see any hash: http://stackoverflow.com/questions/940905
+			$html .= "\n\t\t</ul>";
+			$html .= "</li>";
+		} else {
+			$html .= "\n\t\t<li><a href=\"/login/{$returnTo}\"><strong>Login</strong>" . ($ssoBrandName ? " with {$ssoBrandName}" : '') . "</a></li>";
+		}
+		
+		# Complete the list
+		$html .= "\n\t</ul>";
+		
+		# Surround with a div
+		$html = "\n<div id=\"ssologin\">" . $html . "\n</div>";
+		
+		# Disable the standard link
+		$html .= "\n" . '<style type="text/css">p.loggedinas {display: none;}</style>';
+		
+		# Return the HTML
+		return $html;
+	}
+	
 	
 	
 	# Function to combine a set of files having a submenu into a single page
@@ -747,7 +791,7 @@ class highlightSearchTerms
 		# Buffer the output
 		if (isSet ($referer['host'])) {
 			if ($referer['host'] != $_SERVER['HTTP_HOST']) {
-				ob_start (array ('highlightSearchTerms', 'outsideWrapper')); 
+				ob_start (array ('highlightSearchTerms', 'outsideWrapper'));
 			}
 		}
 	}
