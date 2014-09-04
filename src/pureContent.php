@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-14
- * Version 1.9.0
+ * Version 1.9.1
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -792,6 +792,7 @@ class highlightSearchTerms
 		if (isSet ($referer['host'])) {
 			if ($referer['host'] != $_SERVER['HTTP_HOST']) {
 				ob_start (array ('highlightSearchTerms', 'outsideWrapper'));
+				ob_get_clean ();
 			}
 		}
 	}
