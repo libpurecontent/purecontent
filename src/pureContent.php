@@ -1,8 +1,8 @@
-<?php
+﻿<?php
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-14
- * Version 1.9.1
+ * Version 1.9.2
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -50,7 +50,7 @@ class pureContent {
 		
 		# Assign the complete page URL (i.e. the full page address requested), with index.html removed if it exists, starting from root
 		if (!isSet ($_SERVER['SERVER_PORT'])) {$_SERVER['SERVER_PORT'] = 80;}	// Emulation for CGI/CLI mode
-		$_SERVER['_PAGE_URL'] = $_SERVER['_SITE_URL'] . ($_SERVER['SERVER_PORT'] != 80 ? ':' . $_SERVER['SERVER_PORT'] : '') . $_SERVER['REQUEST_URI'];
+		$_SERVER['_PAGE_URL'] = $_SERVER['_SITE_URL'] . (($_SERVER['SERVER_PORT'] != 80 && $_SERVER['SERVER_PORT'] != 443) ? ':' . $_SERVER['SERVER_PORT'] : '') . $_SERVER['REQUEST_URI'];
 		
 		# Ensure SCRIPT_URL is present
 		if (!isSet ($_SERVER['SCRIPT_URL'])) {
@@ -621,7 +621,7 @@ class pureContent {
 	public static function socialNetworkingLinks ($twitterName = false, $prefixText = false)
 	{
 		# End if server port doesn't match, as this can cause JS warnings on modern browser
-		if ($_SERVER['SERVER_PORT'] != '80') {return false;}
+		if (($_SERVER['SERVER_PORT'] != '80') && ($_SERVER['SERVER_PORT'] != '443')) {return false;}
 		
 		# Build the HTML
 		$html  = "\n<p id=\"socialnetworkinglinks\">";
