@@ -1,8 +1,8 @@
-﻿<?php
+<?php
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-14
- * Version 1.9.2
+ * Version 1.9.3
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -89,6 +89,9 @@ class pureContent {
 	 */
 	public static function assignNavigation ($dividingTextOnPage = ' &#187; ', $dividingTextInBrowserLine = ' &#187; ', $introductoryText = 'You are in:  ', $homeText = 'Home', $enforceStrictBehaviour = false, $browserlineFullHierarchy = false, $homeLocation = '/', $sectionTitleFile = '.title.txt', $menuTitleFile = '.menu.html', $tildeRoot = '/home/', $behaviouralHackFile = '/sitetech/assignNavigationHack.html', $linkToCurrent = false)
 	{
+		# Start an array of the navigation hierarchy
+		$navigationHierarchy = array ();
+		
 		# Ensure the home location and tilde root ends with a trailing slash
 		if (substr ($homeLocation, -1) != '/') {$homeLocation .= '/';}
 		if (substr ($tildeRoot, -1) != '/') {$tildeRoot .= '/';}
@@ -118,6 +121,7 @@ class pureContent {
 			
 			# Start the location line and browserline
 			$locationline = str_replace ('  ', '&nbsp; ', $introductoryText) . "<a href=\"$homeLocation\">$homeText</a>";
+			$navigationHierarchy[$homeLocation] = $homeText;
 			$browserline = '';
 			
 			# Assign the starting point for the links
@@ -155,6 +159,9 @@ class pureContent {
 						include ($_SERVER['DOCUMENT_ROOT'] . $behaviouralHackFile);
 					}
 				}
+				
+				# Add navigation hierarchy item
+				$navigationHierarchy[$link] = $contents;
 			}
 			
 			# $menusection which is used for showing the correct menu, stripping off the trailing slash in it
@@ -162,8 +169,8 @@ class pureContent {
 			$menufile = $serverRoot . $homeLocation . $menusection . '/' . $menuTitleFile;
 		}
 		
-		# Return the result
-		return array ($browserline, $locationline, $menusection, $menufile);
+		# Return the properties
+		return array ($browserline, $locationline, $menusection, $menufile, $navigationHierarchy);
 	}
 	
 	
