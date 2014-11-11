@@ -1,8 +1,8 @@
-<?php
+﻿<?php
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-14
- * Version 1.9.3
+ * Version 1.9.4
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -158,10 +158,10 @@ class pureContent {
 					if ($behaviouralHackFile && file_exists ($_SERVER['DOCUMENT_ROOT'] . $behaviouralHackFile)) {
 						include ($_SERVER['DOCUMENT_ROOT'] . $behaviouralHackFile);
 					}
+					
+					# Add navigation hierarchy item
+					$navigationHierarchy[$link] = $contents;
 				}
-				
-				# Add navigation hierarchy item
-				$navigationHierarchy[$link] = $contents;
 			}
 			
 			# $menusection which is used for showing the correct menu, stripping off the trailing slash in it
@@ -668,8 +668,8 @@ class pureContent {
 		
 		# Image
 		$attributes['og:image'] = $_SERVER['_SITE_URL'] . $imageLocation;
-		if ($imageWidth) {$attributes['og:image:width'] = $width;}
-		if ($imageHeight) {$attributes['og:image:height'] = $height;}
+		if ($imageWidth) {$attributes['og:image:width'] = $imageWidth;}
+		if ($imageHeight) {$attributes['og:image:height'] = $imageHeight;}
 		
 		# Text
 		if ($title) {$attributes['og:title'] = (strlen ($title) > 80 ? substr ($title, 0, 80) . '&hellip' : $title);}
