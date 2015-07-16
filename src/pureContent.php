@@ -1,8 +1,8 @@
-﻿<?php
+<?php
 
 /*
- * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-14
- * Version 1.9.4
+ * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-15
+ * Version 1.9.5
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -186,17 +186,25 @@ class pureContent {
 		# Loop through each menu item to match the starting location but take account of lower-level subdirectories override higher-level directories
 		$match = '';
 		foreach ($menu as $location => $description) {
+			if ($location == '/') {continue;}	// Do not permit matching of / at this stage
 			if (($location == (substr ($_SERVER['REQUEST_URI'], 0, strlen ($location)))) && (strlen ($location) > strlen ($match))) {
 				$match = $location;
 			}
 		}
 		
 		# If no match has been found, check whether the requested page is an orphaned directory (i.e. has no menu item)
-		if ($match == '') {
+		if (!$match) {
 			foreach ($orphanedDirectories as $orphanedDirectory => $orphanAssignment) {
 				if (($orphanedDirectory == (substr ($_SERVER['REQUEST_URI'], 0, strlen ($orphanedDirectory)))) && (strlen ($orphanedDirectory) > strlen ($match))) {
 					$match = $orphanAssignment;
 				}
+			}
+		}
+		
+		# If still no match, and / is present, permit that
+		if (!$match) {
+			if (isSet ($menu['/'])) {
+				$match = '/';
 			}
 		}
 		
