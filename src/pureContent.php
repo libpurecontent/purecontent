@@ -1,8 +1,8 @@
 <?php
 
 /*
- * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-15
- * Version 1.9.6
+ * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-17
+ * Version 1.9.7
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
@@ -362,7 +362,7 @@ class pureContent {
 	public static function editLink ($internalHostRegexp, $port = 8080, $class = 'editlink', $tag = 'p')
 	{
 		# If the host matches and the port is not the edit port, give a link
-		if (preg_match ('/' . addcslashes ($internalHostRegexp, '/') . '/', gethostbyaddr ($_SERVER['REMOTE_ADDR']))) {
+		if (preg_match ('/' . addcslashes ($internalHostRegexp, '/') . '/', gethostbyaddr ($_SERVER['REMOTE_ADDR'])) || isSet ($_COOKIE['purecontenteditorlink'])) {
 			if ($_SERVER['SERVER_PORT'] != $port) {
 				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"http://{$_SERVER['SERVER_NAME']}:{$port}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . '"><img src="/images/icons/page_edit.png" class="icon" /> Editing&nbsp;mode</a>' . "</{$tag}>";
 			} else {
