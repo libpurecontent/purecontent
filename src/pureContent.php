@@ -2,10 +2,10 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-17
- * Version 1.9.8
+ * Version 1.9.9
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
- * Download latest from: http://download.geog.cam.ac.uk/projects/purecontent/
+ * Download latest from: https://download.geog.cam.ac.uk/projects/purecontent/
  */
 
 
@@ -236,6 +236,11 @@ class pureContent {
 				if ($match == $location || $menufile == '*') {
 					#!# Hacked in 060222 - deals with non-top level sections like /foo/bar/ but hard-codes .menu.html ... ; arguably this is a more sensible system though, and avoids passing menu file along a chain
 					$menufileFilename = $_SERVER['DOCUMENT_ROOT'] . $location . '/.menu.html';
+if (isSet ($_SERVER['REMOTE_USER']) && in_array ($_SERVER['REMOTE_USER'], array ('mvl22', 'mb425', 'cec81', 'opl21', 'nab37', 'lem28'))) {
+					if (file_exists ($menufileFilename . '.beta')) {
+						$menufileFilename .= '.beta';
+					}
+}
 					if (file_exists ($menufileFilename)) {
 						if ($returnNotEcho) {
 							$menuFileHtml = file_get_contents ($menufileFilename);
@@ -364,9 +369,9 @@ class pureContent {
 		# If the host matches and the port is not the edit port, give a link
 		if (preg_match ('/' . addcslashes ($internalHostRegexp, '/') . '/', gethostbyaddr ($_SERVER['REMOTE_ADDR'])) || isSet ($_COOKIE['purecontenteditorlink'])) {
 			if ($_SERVER['SERVER_PORT'] != $port) {
-				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"http://{$_SERVER['SERVER_NAME']}:{$port}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . '"><img src="/images/icons/page_edit.png" class="icon" /> Editing&nbsp;mode</a>' . "</{$tag}>";
+				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"https://{$_SERVER['SERVER_NAME']}:{$port}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . '"><img src="/images/icons/page_edit.png" class="icon" /> Editing&nbsp;mode</a>' . "</{$tag}>";
 			} else {
-				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"http://{$_SERVER['SERVER_NAME']}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . "\">[Return to live]</a></{$tag}>";
+				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"https://{$_SERVER['SERVER_NAME']}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . "\">[Return to live]</a></{$tag}>";
 			}
 		}
 		
@@ -413,7 +418,7 @@ class pureContent {
 				$html .= '<form name="switchuser" action="" method="post"><input type="search" name="switchuser[username]" value="' . htmlspecialchars ($userSwitching) . '" placeholder="Switch user" size="10" /> <input type="submit" value="Go!"></form>';
 				$html .= '</li>';
 			}
-			$html .= "\n\t\t\t<li><a href=\"/logout/{$returnTo}\">Logout</a></li>";	// Note that this will not maintain any #anchor, because the server doesn't see any hash: http://stackoverflow.com/questions/940905
+			$html .= "\n\t\t\t<li><a href=\"/logout/{$returnTo}\">Logout</a></li>";	// Note that this will not maintain any #anchor, because the server doesn't see any hash: https://stackoverflow.com/questions/940905
 			$html .= "\n\t\t</ul>";
 			$html .= "</li>";
 		} else {
@@ -653,7 +658,7 @@ class pureContent {
 		# Prepare the tab string
 		$tabs = str_repeat ("\t", ($parentTabLevel));
 		
-		# Build the list; note that the visible value can never have tags within (e.g. <span>): http://stackoverflow.com/questions/5678760
+		# Build the list; note that the visible value can never have tags within (e.g. <span>): https://stackoverflow.com/questions/5678760
 		foreach ($values as $value => $visible) {
 			$fragments[] = '<option value="' . ($valueSubstitution ? str_replace ('%value', htmlspecialchars ($value), $valueSubstitution) : htmlspecialchars ($value)) . '"' . ($value == $selected ? ' selected="selected"' : '') . '>' . htmlspecialchars ($visible) . '</option>';
 		}
