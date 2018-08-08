@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-17
- * Version 1.9.9
+ * Version 1.9.10
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 4.1+ with register_globals set to 'off'
  * Download latest from: https://download.geog.cam.ac.uk/projects/purecontent/
@@ -450,7 +450,7 @@ if (isSet ($_SERVER['REMOTE_USER']) && in_array ($_SERVER['REMOTE_USER'], array 
 		
 		# If logged in, get the real username and ensure they have superuser rights
 		if ($userSwitchingEnabled) {
-			session_start ();
+			if (!session_id ()) {session_start ();}
 			
 			# Maintain an existing session
 			if (isSet ($_SESSION['switchuser']) && isSet ($_SESSION['switchuser']['username']) && preg_match ($usernameRegexp, $_SESSION['switchuser']['username'])) {
