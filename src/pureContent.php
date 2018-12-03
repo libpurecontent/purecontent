@@ -1,10 +1,10 @@
 <?php
 
 /*
- * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-17
- * Version 1.9.10
+ * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-18
+ * Version 1.10.0
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
- * Requires PHP 4.1+ with register_globals set to 'off'
+ * Requires PHP 5.3
  * Download latest from: https://download.geog.cam.ac.uk/projects/purecontent/
  */
 
@@ -1013,8 +1013,9 @@ class highlightSearchTerms
 		
 		# Unique the words to make the regexp more efficient then ensure they are in string-length order (so that e.g. 'and' will match before 'an')
 		$searchWords = array_unique ($searchWords);
-		$ordering = create_function ('$a, $b', 'return strlen ($b) - strlen ($a);');
-		usort ($searchWords, $ordering);
+		usort ($searchWords, function ($a, $b) {
+			return strlen ($b) - strlen ($a);
+		});
 		
 		# Escape slashes to prevent PCRE errors as listed on www.php.net/pcre.pattern.syntax and ensure alignment with word boundaries
 		foreach ($searchWords as $index => $searchWord) {
