@@ -1,8 +1,8 @@
 <?php
 
 /*
- * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-18
- * Version 1.10.0
+ * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-20
+ * Version 1.10.1
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 5.3
  * Download latest from: https://download.geog.cam.ac.uk/projects/purecontent/
@@ -448,31 +448,29 @@ if (isSet ($_SERVER['REMOTE_USER']) && in_array ($_SERVER['REMOTE_USER'], array 
 		# Assume disabled by default
 		$userSwitching = false;
 		
-		# If logged in, get the real username and ensure they have superuser rights
-		if ($userSwitchingEnabled) {
-			if (!session_id ()) {session_start ();}
-			
-			# Maintain an existing session
-			if (isSet ($_SESSION['switchuser']) && isSet ($_SESSION['switchuser']['username']) && preg_match ($usernameRegexp, $_SESSION['switchuser']['username'])) {
-				$userSwitching = $_SESSION['switchuser']['username'];
+		# Start the session
+		if (!session_id ()) {session_start ();}
+		
+		# Maintain an existing session
+		if (isSet ($_SESSION['switchuser']) && isSet ($_SESSION['switchuser']['username']) && preg_match ($usernameRegexp, $_SESSION['switchuser']['username'])) {
+			$userSwitching = $_SESSION['switchuser']['username'];
+		}
+		
+		# If the form is posted, select or clear the user
+		if (isSet ($_POST['switchuser']) && isSet ($_POST['switchuser']['username'])) {
+			if (strlen ($_POST['switchuser']['username']) && preg_match ($usernameRegexp, $_POST['switchuser']['username']) && ($_POST['switchuser']['username'] != $_SERVER['REMOTE_USER'])) {
+				$userSwitching = trim ($_POST['switchuser']['username']);
+				$_SESSION['switchuser']['username'] = $userSwitching;
+			} else {
+				unset ($_SESSION['switchuser']);
+				$userSwitching = false;
 			}
-			
-			# If the form is posted, select or clear the user
-			if (isSet ($_POST['switchuser']) && isSet ($_POST['switchuser']['username'])) {
-				if (strlen ($_POST['switchuser']['username']) && preg_match ($usernameRegexp, $_POST['switchuser']['username']) && ($_POST['switchuser']['username'] != $_SERVER['REMOTE_USER'])) {
-					$userSwitching = trim ($_POST['switchuser']['username']);
-					$_SESSION['switchuser']['username'] = $userSwitching;
-				} else {
-					unset ($_SESSION['switchuser']);
-					$userSwitching = false;
-				}
-				header ("Location: {$_SERVER['_PAGE_URL']}");	// 302 Redirect (temporary)
-			}
-			
-			# Switch the user, and refresh the page to avoid POST warnings
-			if ($userSwitching) {
-				$_SERVER['REMOTE_USER'] = $userSwitching;
-			}
+			header ("Location: {$_SERVER['_PAGE_URL']}");	// 302 Redirect (temporary)
+		}
+		
+		# Switch the user, and refresh the page to avoid POST warnings
+		if ($userSwitching) {
+			$_SERVER['REMOTE_USER'] = $userSwitching;
 		}
 		
 		# Return the user switching status (false or username)
