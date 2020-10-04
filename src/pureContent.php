@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-20
- * Version 1.11.0
+ * Version 1.11.1
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 5.3
  * Download latest from: https://download.geog.cam.ac.uk/projects/purecontent/
@@ -898,17 +898,17 @@ if (isSet ($_SERVER['REMOTE_USER']) && in_array ($_SERVER['REMOTE_USER'], array 
 					$attributesString = str_replace ('<span>&#64;</span>', '@', $attributesString);
 					
 					# Parse out attributes
-					preg_match_all ('/\b([^=]+)="([^"]+)"/', $attributesString, $tokenMatches, PREG_SET_ORDER);
+					preg_match_all ('/\b([^=]+)=("|&quot;)(.*)("|&quot;)/U', $attributesString, $tokenMatches, PREG_SET_ORDER);
 					$attributes = array ();
 					foreach ($tokenMatches as $tokenMatch) {
 						$key = $tokenMatch[1];
-						$value = $tokenMatch[2];
+						$value = $tokenMatch[3];
 						$attributes[$key] = $value;
 					}
 					
 					# Register this instance
 					$instances[$tag] = array (
-						'shortcode'		=> $shortcode,
+						'shortcode' 	=> $shortcode,
 						'attributes'	=> $attributes,
 					);
 				}
