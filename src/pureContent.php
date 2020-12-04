@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-20
- * Version 1.12.0
+ * Version 1.12.1
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 5.3
  * Download latest from: https://download.geog.cam.ac.uk/projects/purecontent/
@@ -374,7 +374,13 @@ class pureContent {
 		# If the host/user matches and the port is not the edit port, give a link
 		if ($isVisible) {
 			if ($_SERVER['SERVER_PORT'] != $port) {
-				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"https://{$_SERVER['SERVER_NAME']}:{$port}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . '?edit" title="Switch to the editing side of the website"><img src="/images/icons/page_edit.png" class="icon" /> Edit page</a>' . "</{$tag}>";
+				$url = "https://{$_SERVER['SERVER_NAME']}:{$port}" . htmlspecialchars ($_SERVER['REQUEST_URI']) . '?edit';
+				$label = 'Edit page';
+				if (isSet ($_SERVER['PURECONTENT_EDITING_WORDPRESS'])) {
+					$url = $_SERVER['PURECONTENT_EDITING_WORDPRESS'] . 'login';
+					$label = 'Wordpress editor';
+				}
+				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"" . $url . '" title="Switch to the editing side of the website"><img src="/images/icons/page_edit.png" class="icon" /> ' . $label . "</a></{$tag}>";
 			} else {
 				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"https://{$_SERVER['SERVER_NAME']}" . htmlspecialchars ($_SERVER['SCRIPT_NAME']) /* i.e. without query string */ . "\" title=\"Switch back to the live, public side of the website\">[Return to live]</a></{$tag}>";
 			}
