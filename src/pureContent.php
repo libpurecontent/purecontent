@@ -1,8 +1,8 @@
 <?php
 
 /*
- * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-20
- * Version 1.12.1
+ * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-21
+ * Version 1.12.2
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 5.3
  * Download latest from: https://download.geog.cam.ac.uk/projects/purecontent/
@@ -735,7 +735,7 @@ class pureContent {
 	
 	
 	# Social networking metadata
-	public static function socialNetworkingMetadata ($siteName, $twitterHandle = false, $imageLocation /* Starting / */, $description, $title = false, $imageWidth = false, $imageHeight = false, $pageUrl = false)
+	public static function socialNetworkingMetadata ($siteName, $twitterHandle /* handle or false */, $imageLocation /* Starting / */, $description, $title = false, $imageWidth = false, $imageHeight = false, $pageUrl = false)
 	{
 		# Start the HTML
 		$html = '';
