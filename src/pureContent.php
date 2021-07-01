@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-21
- * Version 1.12.2
+ * Version 1.12.3
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 5.3
  * Download latest from: https://download.geog.cam.ac.uk/projects/purecontent/
@@ -394,8 +394,8 @@ class pureContent {
 	# Function to provide an SSO link area
 	public static function ssoLinks ($ssoBrandName = false, $profileUrl = false, $profileName = 'My profile', $superusersSwitching = array (), $internalHostRegexp = false)
 	{
-		# End if SSO not enabled
-		if (!isSet ($_SERVER['SINGLE_SIGN_ON_ENABLED'])) {return false;}
+		# End if SSO not enabled (defined and equal to 1, in the server environment)
+		if (!isSet ($_SERVER['SINGLE_SIGN_ON_ENABLED']) || !$_SERVER['SINGLE_SIGN_ON_ENABLED']) {return false;}
 		
 		# Set to show the links by default
 		$showLinks = true;
