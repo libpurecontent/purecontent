@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-21
- * Version 1.12.3
+ * Version 1.12.4
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 5.3
  * Download latest from: https://download.geog.cam.ac.uk/projects/purecontent/
@@ -634,7 +634,7 @@ class pureContent {
 			
 			# Send the user back to the previous page (or the front page if not set); NB: the previous page cannot have had ?style=[whatever] in it because that would have been redirected
 			$referrer = (isSet ($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'http://' . $_SERVER['SERVER_NAME'] . '/');
-			header ("Location: $referrer");
+			header ("Location: {$referrer}");
 		}
 		
 		# Assign the cookie style if that is set and it exists
@@ -978,8 +978,9 @@ class pureContent {
 		# Perform replacements, so that the page now has the shortcodes replaced with the real PHP
 		$content = strtr ($currentFileContents, $replacements);
 		
-		# Determine the shadow file
-		$shadowFile = preg_replace ('/^' . preg_quote ($_SERVER['DOCUMENT_ROOT'], '/') . '/', $_SERVER['DOCUMENT_ROOT'] . '/sitetech/shortcodes-cache', $currentPage);
+		# Determine the shadow file; NB We cannot remove the DOCUMENT_ROOT from $currentPage as the page may be aliased, so instead we look at the local path
+		$scriptName = str_replace (array ('../', '..\\'), '', $_SERVER['SCRIPT_NAME']) . (substr ($_SERVER['SCRIPT_NAME'], -1) == '/' ? 'index.html' : '');
+		$shadowFile = $_SERVER['DOCUMENT_ROOT'] . '/sitetech/shortcodes-cache' . $scriptName;
 		
 		# Determine whether to write the shadow file, or use an existing file if present
 		$writeShadowFile = true;
