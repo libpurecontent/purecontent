@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-21
- * Version 1.12.4
+ * Version 1.12.5
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 5.3
  * Download latest from: https://download.geog.cam.ac.uk/projects/purecontent/
@@ -484,7 +484,7 @@ class pureContent {
 		$html = "\n<div id=\"ssologin\">" . $html . "\n</div>";
 		
 		# Disable the standard link
-		$html .= "\n" . '<style type="text/css">p.loggedinas {display: none;}</style>';
+		$html .= "\n" . '<style>p.loggedinas {display: none;}</style>';
 		
 		# Return the HTML
 		return $html;
@@ -652,7 +652,7 @@ class pureContent {
 		$style = (isSet ($style) ? $style : $temp['key']);
 		
 		# Start the HTML
-		$html['header'] = '<style type="text/css" media="all" title="User Defined Style">@import "' . $directory . $style . '.css";</style>';
+		$html['header'] = '<style media="all" title="User Defined Style">@import "' . $directory . $style . '.css";</style>';
 		$html['links']  = "\n\t" . '<ul class="switch">';
 		$html['links'] .= "\n\t\t" . '<li>Switch style:</li>';
 		
