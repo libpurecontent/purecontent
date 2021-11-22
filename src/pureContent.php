@@ -2,7 +2,7 @@
 
 /*
  * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-21
- * Version 1.12.5
+ * Version 1.12.6
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 5.3
  * Download latest from: https://download.geog.cam.ac.uk/projects/purecontent/
@@ -876,15 +876,23 @@ class pureContent {
 	
 	# Function to run Wordpress-style shortcode handling to enable application embedding, by scanning the page for supported shortcodes, and replacing the content
 	# E.g. [my_form foo="bar" size="5"] runs my_form.php and replaces any %attributes placeholder in that file with $foo = 'bar', $size = '5'
-	public static function shortcodeHandledContent ()
+	public static function shortcodeHandledContent ($additionalDirectory = false)
 	{
+		# Assemble the list of directories where shortcode files are defined
+		$directories = array ();
+		$directories[] = $_SERVER['DOCUMENT_ROOT'] . '/sitetech/shortcodes/';
+		if ($additionalDirectory) {
+			$directories[] = $additionalDirectory;
+		}
+		
 		# Define supported shortcodes, which are listed as files in the shortcodes directory
-		$directory = $_SERVER['DOCUMENT_ROOT'] . '/sitetech/shortcodes/';
-		$files = array_values (preg_grep ('/(.+)\.php$/', scandir ($directory)));	// array_values just reindexes
 		$shortcodes = array ();
-		foreach ($files as $file) {
-			$shortcode = pathinfo ($file, PATHINFO_FILENAME);
-			$shortcodes[$shortcode] = $directory . $file;
+		foreach ($directories as $directory) {
+			$filesThisDirectory = array_values (preg_grep ('/(.+)\.php$/', scandir ($directory)));	// array_values just reindexes
+			foreach ($filesThisDirectory as $file) {
+				$shortcode = pathinfo ($file, PATHINFO_FILENAME);
+				$shortcodes[$shortcode] = $directory . $file;
+			}
 		}
 		
 		# Start a list of instances of shortcodes and their (optional) attributes on the page
