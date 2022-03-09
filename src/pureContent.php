@@ -1,8 +1,8 @@
 <?php
 
 /*
- * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-21
- * Version 1.12.6
+ * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-22
+ * Version 1.12.7
  * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
  * Requires PHP 5.3
  * Download latest from: https://download.geog.cam.ac.uk/projects/purecontent/
@@ -380,6 +380,9 @@ class pureContent {
 					$url = $_SERVER['PURECONTENT_EDITING_WORDPRESS'] . 'login';
 					$label = 'Wordpress editor';
 				}
+if ($_SERVER['SERVER_NAME'] == 'new.geog.cam.ac.uk' || ($_SERVER['SERVER_NAME'] == 'www.geog.cam.ac.uk')) {
+	$label = 'Edit page';
+}
 				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"" . $url . '" title="Switch to the editing side of the website"><img src="/images/icons/page_edit.png" class="icon" /> ' . $label . "</a></{$tag}>";
 			} else {
 				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"https://{$_SERVER['SERVER_NAME']}" . htmlspecialchars ($_SERVER['SCRIPT_NAME']) /* i.e. without query string */ . "\" title=\"Switch back to the live, public side of the website\">[Return to live]</a></{$tag}>";
@@ -888,10 +891,14 @@ class pureContent {
 		# Define supported shortcodes, which are listed as files in the shortcodes directory
 		$shortcodes = array ();
 		foreach ($directories as $directory) {
-			$filesThisDirectory = array_values (preg_grep ('/(.+)\.php$/', scandir ($directory)));	// array_values just reindexes
-			foreach ($filesThisDirectory as $file) {
-				$shortcode = pathinfo ($file, PATHINFO_FILENAME);
-				$shortcodes[$shortcode] = $directory . $file;
+			if (is_dir ($directory)) {
+				if ($filesThisDirectory = preg_grep ('/(.+)\.php$/', scandir ($directory))) {
+					$filesThisDirectory = array_values ($filesThisDirectory);	// array_values just reindexes
+					foreach ($filesThisDirectory as $file) {
+						$shortcode = pathinfo ($file, PATHINFO_FILENAME);
+						$shortcodes[$shortcode] = $directory . $file;
+					}
+				}
 			}
 		}
 		
