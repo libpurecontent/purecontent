@@ -1,14 +1,5 @@
 <?php
 
-/*
- * Coding copyright Martin Lucas-Smith, University of Cambridge, 2003-22
- * Version 1.12.7
- * Distributed under the terms of the GNU Public Licence - www.gnu.org/copyleft/gpl.html
- * Requires PHP 5.3
- * Download latest from: https://download.geog.cam.ac.uk/projects/purecontent/
- */
-
-
 # Clean the server globals: this is the ONE exception to the rule that a library should not run things at top-level
 pureContent::cleanServerGlobals ();
 
