@@ -19,6 +19,9 @@ class pureContent {
 	# Function to clean and standardise server-generated globals
 	public static function cleanServerGlobals ($directoryIndex = 'index.html')
 	{
+		# Do not re-run if already loaded
+		if (isSet ($_SERVER['_SITE_URL'])) {return;}
+		
 		# Assign the server root path, non-slash terminated
 		$_SERVER['DOCUMENT_ROOT'] = ((substr ($_SERVER['DOCUMENT_ROOT'], -1) == '/') ? substr ($_SERVER['DOCUMENT_ROOT'], 0, -1) : $_SERVER['DOCUMENT_ROOT']);
 		
@@ -57,7 +60,7 @@ class pureContent {
 			$_SERVER['SCRIPT_URL'] = $parts[0];
 		}
 		
-		# Assign the query string (for the few cases, e.g. a 404, where a REDIRECT_QUERY_STRING is generated instead
+		# Assign the query string (for the few cases, e.g. a 404, where a REDIRECT_QUERY_STRING is generated instead)
 		$_SERVER['QUERY_STRING'] = (isSet ($_SERVER['REDIRECT_QUERY_STRING']) ? $_SERVER['REDIRECT_QUERY_STRING'] : (isSet ($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : ''));
 		
 		# Assign the referring page
