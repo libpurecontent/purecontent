@@ -873,7 +873,7 @@ if ($_SERVER['SERVER_NAME'] == 'new.geog.cam.ac.uk' || ($_SERVER['SERVER_NAME'] 
 	
 	# Function to run Wordpress-style shortcode handling to enable application embedding, by scanning the page for supported shortcodes, and replacing the content
 	# E.g. [my_form foo="bar" size="5"] runs my_form.php and replaces any %attributes placeholder in that file with $foo = 'bar', $size = '5'
-	public static function shortcodeHandledContent ($additionalDirectory = false)
+	public static function shortcodeHandledContent ($additionalDirectory = false, $pathToSitetech = '' /* i.e. assume include_path by default */)
 	{
 		# Assemble the list of directories where shortcode files are defined
 		$directories = array ();
@@ -1022,7 +1022,7 @@ if ($_SERVER['SERVER_NAME'] == 'new.geog.cam.ac.uk' || ($_SERVER['SERVER_NAME'] 
 		include ($shadowFile);
 		
 		# Include the footer then end, to avoid the main content running naturally
-		require_once ('sitetech/appended.html');
+		require_once ($pathToSitetech . 'sitetech/appended.html');
 		die;
 	}
 }
