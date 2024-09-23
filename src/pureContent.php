@@ -374,12 +374,10 @@ class pureContent {
 					$url = $_SERVER['PURECONTENT_EDITING_WORDPRESS'] . 'login';
 					$label = 'Wordpress editor';
 				}
-if ($_SERVER['SERVER_NAME'] == 'new.geog.cam.ac.uk' || ($_SERVER['SERVER_NAME'] == 'www.geog.cam.ac.uk')) {
-	$label = 'Edit page';
-}
 				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"" . $url . '" title="Switch to the editing side of the website"><img src="/images/icons/page_edit.png" class="icon" /> ' . $label . "</a></{$tag}>";
 			} else {
-				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"https://{$_SERVER['SERVER_NAME']}" . htmlspecialchars ($_SERVER['SCRIPT_NAME']) /* i.e. without query string */ . "\" title=\"Switch back to the live, public side of the website\">[Return to live]</a></{$tag}>";
+				$liveUrl = (isSet ($_SERVER['SCRIPT_URL']) ? $_SERVER['SCRIPT_URL'] : $_SERVER['REQUEST_URI']);		// I.e. ideally without query string
+				return "<{$tag} class=\"" . ($class ? "{$class} " : '') . "noprint\"><a href=\"https://{$_SERVER['SERVER_NAME']}" . htmlspecialchars ($liveUrl) . "\" title=\"Switch back to the live, public side of the website\">[Return to live]</a></{$tag}>";
 			}
 		}
 		
