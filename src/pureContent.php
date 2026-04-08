@@ -870,9 +870,20 @@ class pureContent {
 	
 	
 	# Function to run Wordpress-style shortcode handling to enable application embedding, by scanning the page for supported shortcodes, and replacing the content
-	# E.g. [my_form foo="bar" size="5"] runs my_form.php and replaces any %attributes placeholder in that file with $foo = 'bar', $size = '5'
+	# E.g. [my_form foo="bar" size="5"] runs my_form.php and provides $attributes array as array ('foo' => 'bar', 'size' => '5')
 	public static function shortcodeHandledContent ($additionalDirectory = false, $pathToSitetech = '' /* i.e. assume include_path by default */)
 	{
+		# Do not attempt to load shortcode handling if the page is already in a Wordpress area; this avoids a crash within Wordpress of add_shortcode already being defined
+		if (isSet ($_SERVER['PURECONTENT_EDITING_WORDPRESS'])) {return;}
+		
+		# Start a register of shortcode handlers; this has to use the special superglobal $GLOBALS so that the local function add_shortcode below can access a static method -level variable
+		$GLOBALS['shortcodes'] = array ();
+		
+		# Create a function used to register each shortcode loaded (using require_once) below
+		function add_shortcode ($shortcode, $shortcodeFunction) {
+			$GLOBALS['shortcodes'][$shortcode] = $shortcodeFunction;
+		}
+		
 		# Assemble the list of directories where shortcode files are defined
 		$directories = array ();
 		$directories[] = $_SERVER['DOCUMENT_ROOT'] . '/sitetech/shortcodes/';
@@ -880,34 +891,40 @@ class pureContent {
 			$directories[] = $additionalDirectory;
 		}
 		
-		# Define supported shortcodes, which are listed as files in the shortcodes directory
-		$shortcodes = array ();
+		# Register supported shortcodes and their functions, by scanning the shortcodes directory and loading each; callback function code is not actually executed at this stage
 		foreach ($directories as $directory) {
 			if (is_dir ($directory)) {
 				if ($filesThisDirectory = preg_grep ('/(.+)\.php$/', scandir ($directory))) {
 					$filesThisDirectory = array_values ($filesThisDirectory);	// array_values just reindexes
 					foreach ($filesThisDirectory as $file) {
-						$shortcode = pathinfo ($file, PATHINFO_FILENAME);
-						$shortcodes[$shortcode] = $directory . $file;
+						require_once ($directory . $file);
 					}
 				}
 			}
 		}
 		
+		# End if no shortcodes supported, for efficiency
+		$shortcodes = $GLOBALS['shortcodes'];
+		unset ($GLOBALS['shortcodes']);
+		if (!$shortcodes) {return false;}
+		
+		# Load the current page
+		$currentPage = $_SERVER['SCRIPT_FILENAME'];
+		$currentFileContents = file_get_contents ($currentPage);
+		
+		# Quick efficiency check to end if no shortcodes present on page - simply checks for open square bracket character
+		if (!substr_count ($currentFileContents, '[')) {return false;}
+		
 		# Start a list of instances of shortcodes and their (optional) attributes on the page
 		$instances = array ();
 		
-		# If a shortcode is present, run the file
-		foreach ($shortcodes as $shortcode => $file_ignored) {
-			
-			# Load the current page
-			$currentPage = $_SERVER['SCRIPT_FILENAME'];
-			$currentFileContents = file_get_contents ($currentPage);
+		# If shortcode(s) are present, determine instances of them
+		foreach ($shortcodes as $shortcode => $shortcodeFunction) {
 			
 			# Scan for the current shortcode tag, in basic format (i.e. without attributes), e.g. [my_form], on the page, and register it once (however many times it appears, as each will result in the same replacement)
 			$tag = '[' . $shortcode . ']';
 			if (substr_count ($currentFileContents, $tag)) {
-				$instances[$tag] = array (
+				$instances[$tag] = array (	// $tag is the complete tag including attributes
 					'shortcode' 	=> $shortcode,
 					'attributes'	=> array (),
 				);
@@ -940,7 +957,7 @@ class pureContent {
 					}
 					
 					# Register this instance
-					$instances[$tag] = array (
+					$instances[$tag] = array (	// $tag is the complete tag including attributes
 						'shortcode' 	=> $shortcode,
 						'attributes'	=> $attributes,
 					);
@@ -951,33 +968,17 @@ class pureContent {
 		# End if no instances, as no special handling needed
 		if (!$instances) {return false;}
 		
-		# For each instance, load the plugin and set the attributes
+		# For each instance, execute the shortcode with the supplied attributes (if any), and register this as a replacement
 		$replacements = array ();
 		foreach ($instances as $tag => $instance) {
+			
+			# Determine the shortcode function
 			$shortcode = $instance['shortcode'];
+			$shortcodeFunction = $shortcodes[$shortcode];
+			
+			# Execute the shortcode
 			$attributes = $instance['attributes'];
-			
-			# Load this shortcode's plugin, with the correct directory context
-			$plugin = $shortcodes[$shortcode];
-			$shortcodeContent = file_get_contents ($plugin);
-			
-			# If an attributes placeholder is specified, replace with values
-			if (substr_count ($shortcodeContent, '%attributes')) {
-				$attributesStrings = array ();
-				foreach ($attributes as $key => $value) {
-					$attributesStrings[] = "\${$key} = '" . str_replace ("'", "\\'", $value) . "'";
-				}
-				$attributesString = implode (', ', $attributesStrings);
-				$shortcodeContent = str_replace ('%attributes', $attributesString, $shortcodeContent);
-			}
-			
-			# If the tag has become surrounded with a paragraph tag by the WYSIWYG editor, include that surrounding tag in the replacement
-			if (preg_match ('/(<p[^>]*>' . preg_quote ($tag, '/') . '<\/p>)/', $currentFileContents, $matches)) {
-				$tag = $matches[0];
-			}
-			
-			# Replace the shortcode in the page content with the generated content
-			$replacements[$tag] = $shortcodeContent;
+			$replacements[$tag] = $shortcodeFunction ($attributes);
 		}
 		
 		//var_dump ($replacements);
@@ -1016,7 +1017,7 @@ class pureContent {
 			${$key} = $value;
 		}
 		
-		# Run the page; the PHP enviroment, e.g. REQUEST_URI will remain unamended with the original filename
+		# Run the page; the PHP environment, e.g. REQUEST_URI will remain unamended with the original filename
 		include ($shadowFile);
 		
 		# Include the footer then end, to avoid the main content running naturally
