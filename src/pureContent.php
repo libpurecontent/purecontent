@@ -869,9 +869,8 @@ class pureContent {
 	}
 	
 	
-	# Function to run Wordpress-style shortcode handling to enable application embedding, by scanning the page for supported shortcodes, and replacing the content
-	# E.g. [my_form foo="bar" size="5"] runs my_form.php and provides $attributes array as array ('foo' => 'bar', 'size' => '5')
-	public static function shortcodeHandledContent ($additionalDirectory = false, $pathToSitetech = '' /* i.e. assume include_path by default */)
+	# Function to load shortcodes; these may then be used by the client code calling shortcodeHandledContent () as below; the split between loading/use is so that code within a header can use them early
+	public static function loadShortcodes ($additionalDirectory = false)
 	{
 		# Do not attempt to load shortcode handling if the page is already in a Wordpress area; this avoids a crash within Wordpress of add_shortcode already being defined
 		if (isSet ($_SERVER['PURECONTENT_EDITING_WORDPRESS'])) {return;}
@@ -902,6 +901,16 @@ class pureContent {
 				}
 			}
 		}
+	}
+	
+	
+	# Function to run Wordpress-style shortcode handling to enable application embedding, by scanning the page for supported shortcodes, and replacing the content
+	# loadShortcodes () must have been run first
+	# E.g. [my_form foo="bar" size="5"] runs my_form.php and provides $attributes array as array ('foo' => 'bar', 'size' => '5')
+	public static function shortcodeHandledContent ($pathToSitetech = '' /* i.e. assume include_path by default */)
+	{
+		# End if not supported, i.e. no loading earlier
+		if (!isSet ($GLOBALS['shortcodes'])) {return false;}
 		
 		# End if no shortcodes supported, for efficiency
 		$shortcodes = $GLOBALS['shortcodes'];
